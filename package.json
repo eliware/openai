@@ -1,7 +1,7 @@
 {
     "name": "@eliware/openai",
     "type": "module",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "description": "A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.",
     "module": "index.mjs",
     "types": "index.d.ts",
@@ -41,7 +41,7 @@
     },
     "homepage": "https://github.com/eliware/openai#readme",
     "devDependencies": {
-        "jest": "^30.0.4"
+        "jest": "^30.4.2"
     },
     "jest": {
         "testEnvironment": "node",
@@ -52,6 +52,6 @@
         ]
     },
     "dependencies": {
-        "openai": "^5.9.0"
+        "openai": "^6.45.0"
     }
 }
