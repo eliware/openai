@@ -1,9 +1,9 @@
-import OpenAI from 'openai';
+import OpenAI, { AzureOpenAI } from 'openai';
 
-/**
- * Creates and returns a new OpenAI client.
- * @param apiKey Optional API key. If not provided, uses process.env.OPENAI_API_KEY.
- * @returns A promise that resolves to an OpenAI client instance.
- * @throws If the API key is not provided.
- */
-export declare function createOpenAI(apiKey?: string): Promise<OpenAI>;
+export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0];
+export type AzureOpenAIOptions = ConstructorParameters<typeof AzureOpenAI>[0];
+
+/** Creates an OpenAI client from an API key or full SDK options. */
+export declare function createOpenAI(options?: string | OpenAIOptions): OpenAI;
+/** Creates an Azure OpenAI client from SDK options or environment variables. */
+export declare function createAzureOpenAI(options?: AzureOpenAIOptions): AzureOpenAI;
