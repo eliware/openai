@@ -33,3 +33,15 @@
 - Fixed the Azure example’s unused import lint warning.
 - Made the Azure example run only when the required Azure environment variables are configured.
 - Confirmed clean linting and 100% test coverage.
+## 1.1.7
+
+- Added selectable HTTP and Responses WebSocket transports.
+- Added streaming and non-streaming Responses API support over WebSockets.
+- Added configurable WebSocket reconnect and queue options.
+- Preserved Responses helpers and resources when using WebSocket transport.
+- Added TypeScript definitions for transport selection and WebSocket compatibility APIs.
+- Added the `ws` dependency and included examples in the published package.
+- Reorganized examples for HTTP, Azure, HTTP streaming, WebSocket, and WebSocket streaming usage.
+- Expanded tests to 100% coverage across statements, branches, functions, and lines.
+- Added project guidance in `AGENTS.md`.
+
