@@ -27,3 +27,9 @@
 - Added validation for API keys, Azure endpoints, and API versions.
 - Updated TypeScript declarations, README documentation, and usage examples.
 - Expanded tests to maintain 100% coverage across all metrics.
+
+## 1.1.6
+
+- Fixed the Azure example’s unused import lint warning.
+- Made the Azure example run only when the required Azure environment variables are configured.
+- Confirmed clean linting and 100% test coverage.
