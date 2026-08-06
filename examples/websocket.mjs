@@ -1,0 +1,13 @@
+import { createOpenAI } from '@eliware/openai';
+
+const openai = createOpenAI({
+  transport: 'websocket',
+  reconnect: { maxRetries: 3 },
+});
+
+try {
+  const response = await openai.responses.create({ model: 'gpt-5.6-luna', input: 'Say hello.' });
+  console.log(response.output);
+} finally {
+  openai.responses.close();
+}
