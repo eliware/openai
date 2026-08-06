@@ -18,3 +18,12 @@
 - Added the standardized Oxlint command.
 - Updated package metadata and lockfiles for the latest maintenance pass.
 - Synchronized the package with the current Eliware Node.js 26 workflow conventions.
+
+## 1.1.5
+
+- Added manual GitHub Actions workflow dispatch support.
+- Added full OpenAI SDK option passthrough while preserving API-key string compatibility.
+- Added `createAzureOpenAI()` with environment-variable configuration support.
+- Added validation for API keys, Azure endpoints, and API versions.
+- Updated TypeScript declarations, README documentation, and usage examples.
+- Expanded tests to maintain 100% coverage across all metrics.
