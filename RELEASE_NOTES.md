@@ -45,3 +45,9 @@
 - Expanded tests to 100% coverage across statements, branches, functions, and lines.
 - Added project guidance in `AGENTS.md`.
 
+
+## 1.1.8
+
+- Removed the remaining Istanbul coverage-ignore directive from the WebSocket adapter.
+- Updated the associated tests to verify the adapter naturally reaches full coverage.
+- Maintained 100% statements, branches, functions, and lines coverage.
