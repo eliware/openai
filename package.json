@@ -53,6 +53,6 @@
     ]
   },
   "dependencies": {
-    "openai": "^6.45.0"
+    "openai": "^7.4.0"
   }
 }
