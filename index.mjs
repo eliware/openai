@@ -38,11 +38,7 @@ export class ResponsesWebSocketAdapter {
       } else if (event.type === 'error') throw event.error;
     }
   }
-  /* istanbul ignore next -- class method declaration is exercised through stream calls */
-  stream(input = {}, options) {
-    const params = { ...input, ...options, stream: true };
-    return this.create(params);
-  }
+  stream(input = {}, options) { const params = { ...input, ...options, stream: true }; return this.create(params); }
   retrieve(...args) { return this.httpResponses.retrieve(...args); }
   delete(...args) { return this.httpResponses.delete(...args); }
   cancel(...args) { return this.httpResponses.cancel(...args); }

@@ -38,7 +38,7 @@ describe('createOpenAI', () => {
   });
   test('supports direct adapter construction with default options', () => expect(new ResponsesWebSocketAdapter({}).socket).toBeInstanceOf(FakeResponsesWS));
   test('supports adapter default create input', async () => { const adapter = new ResponsesWebSocketAdapter({}); expect((await adapter.create()).status).toBe('completed'); });
-  test('supports adapter stream helper directly', async () => { const adapter = new ResponsesWebSocketAdapter({}); const events = []; for await (const event of adapter.stream({ model: 'test' })) events.push(event); expect(events).toHaveLength(2); });
+  test('supports adapter stream helper directly', async () => { const adapter = new ResponsesWebSocketAdapter({}); const events = []; for await (const event of adapter.stream({ model: 'test' })) events.push(event); expect(events).toHaveLength(2); const defaults = []; for await (const event of adapter.stream()) defaults.push(event); expect(defaults).toHaveLength(2); });
   test('delegates non-create Responses helpers over HTTP', async () => {
     const calls = {}; const http = {};
     for (const name of ['retrieve', 'delete', 'cancel', 'parse']) http[name] = (...args) => { calls[name] = args; return Promise.resolve(name); };
