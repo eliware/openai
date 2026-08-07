@@ -1,5 +1,19 @@
 # Release Notes
 
+## 1.1.9
+
+- Added Responses WebSocket lifecycle APIs: `ready()`, `isOpen()`, `state`, and awaitable `close()`.
+- Added bounded WebSocket shutdown with configurable timeout, socket termination fallback, and normalized timeout errors.
+- Added abort support for streaming and non-streaming Responses requests.
+- Added normalized Responses events with raw event, response ID, request ID, and server error metadata.
+- Added consistent `ResponsesError` handling for failed, incomplete, socket, close, abort, and HTTP errors.
+- Added callback support for HTTP and WebSocket Responses calls, including AgentX lifecycle and tool-streaming callbacks.
+- Added injectable WebSocket implementations and the `createMockResponsesTransport()` test helper.
+- Added HTTP Responses event/callback adapter for transport-compatible behavior.
+- Added tool, MCP, reasoning, shell-call, and output-item streaming documentation.
+- Expanded TypeScript declarations, examples, tests, and compatibility coverage.
+- Maintained 100% statements, branches, functions, and lines coverage with clean linting.
+
 ## 1.1.3 — Current changes
 
 - Standardized Node.js 26 CI workflow.
