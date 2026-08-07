@@ -1,0 +1,2 @@
+import { expect, test } from '@jest/globals';
+test('public facade exports package API', async () => { const api = await import('../index.mjs'); expect(api).toEqual(expect.objectContaining({ createOpenAI: expect.any(Function), createAzureOpenAI: expect.any(Function), ResponsesError: expect.any(Function), ResponsesWebSocketAdapter: expect.any(Function), createMockResponsesTransport: expect.any(Function) })); });
