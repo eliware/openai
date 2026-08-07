@@ -73,7 +73,7 @@ const response = await openai.responses.create({ model: 'gpt-5.6-luna', input: '
 const events = openai.responses.stream({ model: 'gpt-5.6-luna', input: 'Hello' });
 for await (const event of events) console.log(event);
 
-openai.responses.close();
+await openai.responses.close();
 ```
 
 The WebSocket adapter also exposes a transport-neutral event iterator. Use `events()` when you need protocol events without collecting a final response:
@@ -98,7 +98,7 @@ await openai.responses.createWithEvents(request, {
 });
 ```
 
-For deterministic tests, `createMockResponsesTransport(events)` returns an injectable WebSocket implementation.
+For deterministic tests, `createMockResponsesTransport(events)` returns an injectable WebSocket implementation. It accepts optional `{ autoOpen, delay, events }` options; the event list can include text, function/shell/MCP argument deltas, reasoning summaries, output items, terminal events, and arbitrary socket scenarios. The returned fake exposes `push()`, `error()`, `reconnect()`, `sent`, and `instances` for deterministic lifecycle tests.
 
 For tests or alternate runtimes, provide `WebSocketImpl` and optionally `url` in the client options. The adapter exposes `await responses.ready()`, `responses.isOpen()`, and `responses.state` (`connecting`, `open`, `closing`, or `closed`). Events include `raw`, `responseId`, and `requestId` when supplied by the server.
 
@@ -149,13 +149,34 @@ For help, questions, or to chat with the author and community, visit:
 
 #### Tool and item streaming
 
-The event iterator and callbacks preserve protocol event types. Consumers should handle
-`response.output_item.added`/`done`, function-call argument deltas, shell-call command
-deltas, MCP argument deltas, reasoning summary events, and text deltas in their event
-handlers. Submit tool results using the normal Responses API request with
-`previous_response_id`; tool execution and confirmation remain the application's
-responsibility.
+The event iterator and callbacks preserve protocol event types. TypeScript consumers
+can use the exported `ResponsesEvent` union and narrow on `event.type`.
+
+Handle these tool/event families in the iterator or `onEvent` callback:
+
+- `response.output_item.added` / `response.output_item.done`
+- `response.function_call_arguments.delta` / `.done`
+- `response.custom_tool_call_input.delta` / `.done`
+- `response.mcp_call_arguments.delta` / `.done`
+- reasoning summary/text delta and done events
+- text delta/done events
+
+Accumulate argument/input deltas by output-item ID. On the corresponding `.done` event,
+parse the completed arguments, execute or confirm the tool in the application, then
+submit its output with a new Responses request using `previous_response_id`. This
+library does not execute tools, handle confirmations, or persist tool state.
 
 `raw` contains the original transport event. `responseId` and `requestId` are populated
-when supplied by the server. `onError` is called for protocol failures, socket failures,
-premature close, abort, and stream exhaustion.
+when supplied by the server. Error events preserve the original event and available
+`code`, `type`, `status`, `parameter`, `requestId`, and `cause` metadata. `onError` is
+called for protocol failures, socket failures, premature close, abort, and stream
+exhaustion.
+
+### Event and error contract
+
+WebSocket lifecycle events (`connecting`, `open`, `reconnecting`, `reconnected`,
+`close`, and `error`) are transport events. Response protocol events are yielded
+with their original `type`, plus `raw`, `responseId`, and `requestId` when available.
+`ResponsesError` preserves the originating event and exposes `code`, `type`, `status`,
+`parameter`, `requestId`, and `cause` where available. Always await `responses.close()`
+during shutdown.

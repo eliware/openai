@@ -14,3 +14,16 @@ describe('normalizeEvent', () => {
     expect(normalizeEvent('event')).toBe('event');
   });
 });
+
+test('normalizes HTTP and transport envelopes to the same shape', async () => {
+  const response = { id: 'resp_shared' };
+  const protocol = { type: 'response.completed', response, request_id: 'req_shared' };
+  expect(normalizeEvent(protocol)).toMatchObject({ type: protocol.type, responseId: 'resp_shared', requestId: 'req_shared', raw: protocol });
+  expect(normalizeEvent({ type: 'message', message: protocol }, { type: 'message', message: protocol })).toMatchObject({
+    type: protocol.type, responseId: 'resp_shared', requestId: 'req_shared', raw: { type: 'message', message: protocol },
+  });
+});
+
+test('falls back to output item ID', () => {
+  expect(normalizeEvent({ item: { id: 'item_1' } })).toMatchObject({ responseId: 'item_1' });
+});

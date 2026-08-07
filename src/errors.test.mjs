@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { ResponsesError, abortError } from './errors.mjs';
+import { ResponsesError, abortError, responsesErrorFrom } from './errors.mjs';
 
 describe('errors', () => {
   test('preserves direct response metadata', () => {
@@ -14,10 +14,19 @@ describe('errors', () => {
   test('supports default error options and missing metadata', () => {
     expect(new ResponsesError('bad')).toMatchObject({ name: 'ResponsesError', message: 'bad' });
   });
+  test('wraps SDK errors and preserves fallback metadata', () => {
+    const cause = Object.assign(new Error('sdk failed'), { error: { code: 'nested' }, status_code: 503, request_id: 'req_nested' });
+    const error = responsesErrorFrom(cause);
+    expect(error).toMatchObject({ name: 'ResponsesError', message: 'sdk failed', code: 'nested', status: 503, requestId: 'req_nested', cause });
+    const fallback = responsesErrorFrom(null, { message: 'fallback', request_id: 'req_fallback' });
+    expect(fallback).toMatchObject({ message: 'fallback', requestId: 'req_fallback' });
+    expect(responsesErrorFrom({}, {})).toMatchObject({ message: 'Responses request failed' });
+  });
   test('creates AbortError', () => {
     const controller = new AbortController(); controller.abort();
     expect(abortError(controller.signal).name).toBe('AbortError');
     const reason = new Error('cancelled'); controller.abort(reason);
     expect(abortError({ reason })).toBe(reason);
+    expect(abortError().name).toBe('AbortError');
   });
 });

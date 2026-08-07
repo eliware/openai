@@ -69,10 +69,173 @@ test('covers default socket and readiness paths', async () => {
   expect(adapter.socket._createSocket('url', {}).readyState).toBe(1);
   adapter.socket.socket = undefined; expect(adapter.isOpen()).toBe(false); expect(adapter.state).toBe('closed');
   adapter.socket.socket = { readyState: 0 }; FakeResponsesWS.events = [{ type: 'unknown' }, { type: 'close' }]; await expect(adapter.ready()).rejects.toThrow('ready');
-  adapter.socket.socket = { readyState: 0 }; FakeResponsesWS.events = [{ type: 'error' }]; await expect(adapter.ready()).rejects.toBeUndefined();
+  adapter.socket.socket = { readyState: 0 }; FakeResponsesWS.events = [{ type: 'error' }]; await expect(adapter.ready()).rejects.toMatchObject({ name: 'ResponsesError', message: 'Responses WebSocket error' });
 });
 
 test('handles abort during an active stream', async () => {
   const adapter = new ResponsesWebSocketAdapter({}, {}, {}); const controller = new AbortController(); adapter.socket.stream = () => { let i = 0; const values = [{ type: 'message', message: { type: 'response.output_text.delta', delta: 'x' } }, { type: 'message', message: { type: 'response.completed', response: {} } }]; return { [Symbol.asyncIterator]() { return this; }, next: async () => i < values.length ? { value: values[i++], done: false } : { done: true }, return: async () => ({ done: false }) }; };
   await expect(adapter.create({}, { signal: controller.signal, onEvent: () => controller.abort() })).rejects.toMatchObject({ name: 'AbortError' });
+});
+
+test('preserves tool, MCP, and reasoning events through reconnect lifecycle', async () => {
+  const adapter = make(); const seen = [];
+  FakeResponsesWS.events = [
+    { type: 'reconnecting', reconnect: { attempt: 1 } },
+    { type: 'reconnected' },
+    { type: 'message', message: { type: 'response.function_call_arguments.delta', delta: '{"x":', response_id: 'resp_1', request_id: 'req_1' } },
+    { type: 'message', message: { type: 'response.mcp_call_arguments.delta', delta: '1' } },
+    { type: 'message', message: { type: 'response.reasoning_summary_text.delta', delta: 'thinking' } },
+    { type: 'message', message: { type: 'response.completed', response: { id: 'resp_1' } } },
+  ];
+  const result = await adapter.createWithEvents({}, { onEvent: event => seen.push(event) });
+  expect(result.id).toBe('resp_1');
+  expect(seen.map(event => event.type)).toEqual([
+    'response.function_call_arguments.delta', 'response.mcp_call_arguments.delta', 'response.reasoning_summary_text.delta', 'response.completed',
+  ]);
+  expect(seen[0]).toMatchObject({ responseId: 'resp_1', requestId: 'req_1', raw: { type: 'message' } });
+});
+
+test('preserves structured protocol error metadata', async () => {
+  const adapter = make(); FakeResponsesWS.events = [{ type: 'error', error: { code: 'rate_limit', type: 'server_error', status: 429, param: 'input', request_id: 'req_9', message: 'slow down' } }];
+  await expect(adapter.create({})).rejects.toMatchObject({ code: 'rate_limit', type: 'server_error', status: 429, parameter: 'input', requestId: 'req_9', message: 'slow down' });
+});
+
+test('normalizes websocket onError lifecycle events', async () => {
+  const adapter = make(); const calls = [];
+  FakeResponsesWS.events = [{ type: 'error', error: { code: 'bad', request_id: 'req_ws', message: 'failed' } }];
+  await expect(adapter.create({}, { onError: (error, event) => calls.push([error, event]) })).rejects.toThrow('failed');
+  expect(calls[0][1]).toMatchObject({ type: 'error', requestId: 'req_ws', raw: expect.any(Object) });
+});
+
+test('aborting an active websocket request closes its iterator', async () => {
+  const adapter = make(); const controller = new AbortController(); let returned = false;
+  adapter.socket.stream = () => {
+    let resolveNext;
+    return {
+      [Symbol.asyncIterator]() { return this; },
+      next: () => new Promise(resolve => { resolveNext = resolve; }),
+      return: async () => { returned = true; resolveNext?.({ done: true }); return { done: true }; },
+    };
+  };
+  const pending = adapter.create({}, { signal: controller.signal });
+  controller.abort(new Error('stop'));
+  await expect(pending).rejects.toMatchObject({ name: 'Error', message: 'stop' });
+  expect(returned).toBe(true);
+});
+
+test('close waits for active streams and prevents new requests', async () => {
+  const adapter = make(); let returned = false;
+  adapter.socket.stream = () => {
+    let resolveNext;
+    return {
+      [Symbol.asyncIterator]() { return this; },
+      next: () => new Promise(resolve => { resolveNext = resolve; }),
+      return: async () => { returned = true; resolveNext?.({ done: true }); return { done: true }; },
+    };
+  };
+  const pending = adapter.create({});
+  await Promise.resolve();
+  await adapter.close();
+  expect(returned).toBe(true);
+  await expect(pending).rejects.toBeTruthy();
+  await expect(adapter.create({})).rejects.toMatchObject({ message: 'Responses WebSocket is closed' });
+});
+
+test('preserves websocket protocol metadata in callbacks and errors', async () => {
+  const adapter = make(); const seen = [];
+  FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.output_text.delta', delta: 'x', response_id: 'resp_meta', request_id: 'req_meta' } }, { type: 'message', message: { type: 'response.completed', response: { id: 'resp_meta' }, request_id: 'req_meta' } }];
+  await adapter.create({}, { onEvent: event => seen.push(event) });
+  expect(seen[0]).toMatchObject({ responseId: 'resp_meta', requestId: 'req_meta', raw: expect.any(Object) });
+  FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.failed', error: { code: 'server', request_id: 'req_error', message: 'failed' } } }];
+  await expect(adapter.create({})).rejects.toMatchObject({ requestId: 'req_error', event: { raw: expect.any(Object) } });
+});
+
+test('covers NodeSocketAdapter once and non-abort iterator failures', async () => {
+  class CustomSocket {
+    constructor() { this.readyState = 1; this.handlers = new Map(); }
+    on(event, listener) { this.handlers.set(event, listener); }
+    removeListener(event) { this.handlers.delete(event); }
+    send() {}
+    close() {}
+    trigger(event, ...args) { this.handlers.get(event)?.(...args); }
+  }
+  const adapter = new ResponsesWebSocketAdapter({}, { WebSocketImpl: CustomSocket, url: 'ws://test' }, {});
+  const socket = adapter.socket._createSocket('ws://test', {}); let opened = 0;
+  socket.once('open', () => { opened += 1; }); socket.socket.trigger('open'); expect(opened).toBe(1);
+  adapter.socket.stream = () => ({
+    [Symbol.asyncIterator]() { return this; },
+    next: async () => { throw new Error('iterator failed'); },
+    return: async () => ({ done: true }),
+  });
+  await expect(adapter.create({})).rejects.toThrow('iterator failed');
+});
+
+test('covers close completion and close error callbacks', async () => {
+  const complete = make();
+  complete.socket.socket = { readyState: 1, once(event, listener) { if (event === 'close') listener(); }, removeListener() {}, close() {} };
+  await complete.close();
+
+  const failed = make();
+  failed.socket.socket = { readyState: 1, once(event, listener) { if (event === 'error') listener(new Error('close failed')); }, removeListener() {}, close() {} };
+  await expect(failed.close()).rejects.toThrow('close failed');
+});
+
+test('covers repeated close and idempotent close callback', async () => {
+  const adapter = make();
+  await adapter.close();
+  await expect(adapter.close()).resolves.toBeUndefined();
+  const callbacks = make();
+  callbacks.socket.socket = {
+    readyState: 1,
+    once(event, listener) { if (event === 'close') { listener(); listener(); } },
+    removeListener() {},
+    close() {},
+  };
+  await callbacks.close();
+});
+
+test('covers already-closing socket close completion', async () => {
+  const adapter = make();
+  adapter.socket.socket = {
+    readyState: 3,
+    once(event, listener) { if (event === 'close') listener(); },
+    removeListener() {},
+    close() {},
+  };
+  await adapter.close();
+});
+
+test('covers request options default', async () => {
+  const adapter = make();
+  FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.completed', response: {} } }];
+  const events = adapter._request({});
+  for await (const event of events) expect(event).toBeTruthy();
+});
+
+test('shares pending readiness work', async () => {
+  const adapter = make();
+  adapter.socket.socket = { readyState: 0 };
+  let resolveNext;
+  adapter.socket.stream = () => ({
+    [Symbol.asyncIterator]() { return this; },
+    next() { return new Promise(resolve => { resolveNext = resolve; }); },
+    return() { return Promise.resolve({ done: true }); },
+  });
+  const first = adapter.ready();
+  const second = adapter.ready();
+  resolveNext({ value: { type: 'open' }, done: false });
+  await Promise.all([first, second]);
+});
+
+test('closes sockets without once support', async () => {
+  const adapter = make();
+  adapter.socket.socket = { readyState: 1, once: undefined };
+  adapter.socket.close = () => {};
+  await adapter.close();
+});
+
+test('handles close failure', async () => {
+  const adapter = make();
+  adapter.socket.close = () => { throw new Error('close failed'); };
+  await expect(adapter.close()).rejects.toThrow('close failed');
 });
