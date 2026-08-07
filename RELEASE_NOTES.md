@@ -1,5 +1,10 @@
 # Release Notes
 
+## 1.1.10
+
+- Normalized package metadata formatting and preserved the existing API and dependency set.
+
+
 ## 1.1.9
 
 - Added Responses WebSocket lifecycle APIs: `ready()`, `isOpen()`, `state`, and awaitable `close()`.
