@@ -40,7 +40,7 @@ import { createOpenAI } from '@eliware/openai';
 
 (async () => {
   // Optionally pass your API key, or set OPENAI_API_KEY in your environment
-  const openai = await createOpenAI();
+  const openai = createOpenAI();
   // Example: list models
   // const models = await openai.models.list();
   // console.log(models);
@@ -85,15 +85,21 @@ for await (const event of events) console.log(event);
 
 `create()` and `stream()` accept `{ signal }`. Completed responses resolve normally; failed, incomplete, socket-error, and premature-close events reject with `ResponsesError`, which preserves the original event and available error metadata. `responses.close()` is awaitable and bounded; use `await responses.close({ timeout: 30_000 })` to control the shutdown deadline. On timeout it terminates the socket when supported and rejects with `ResponsesError`.
 
-Callbacks are available through `createWithEvents()` (and the second argument to `create()`). AgentX-compatible lifecycle callbacks include `onResponseCreated`, `onResponseProgress`, `onContentPartAdded`, `onContentPartDone`, `onTextDone`, and `onResponseCompleted`. without changing the normal event iterator API:
+Callbacks are available through `createWithEvents()` (and the second argument to `create()`) without changing the normal event iterator API. AgentX-compatible lifecycle callbacks include `onResponseCreated`, `onResponseProgress`, `onContentPartAdded`, `onContentPartDone`, `onTextDone`, and `onResponseCompleted`:
 
 ```js
 await openai.responses.createWithEvents(request, {
-  onEvent: event => {},
+  onEvent: (event, raw) => {},
+  onResponseCreated: (response, event) => {},
+  onResponseProgress: (response, event) => {},
+  onContentPartAdded: (part, event) => {},
+  onContentPartDone: (part, event) => {},
   onTextDelta: (delta, event) => {},
   onItemAdded: (item, event) => {},
   onItemDone: (item, event) => {},
+  onTextDone: (text, event) => {},
   onCompleted: (response, event) => {},
+  onResponseCompleted: (response, event) => {},
   onError: (error, event) => {},
 });
 ```
@@ -121,7 +127,6 @@ Both helpers throw clear errors when required configuration is missing.
 Type definitions are included:
 
 ```ts
-import { createOpenAI } from '@eliware/openai';
 import type OpenAI from 'openai';
 import { createOpenAI, createAzureOpenAI } from '@eliware/openai';
 const openai: import('@eliware/openai').OpenAIClient = createOpenAI();

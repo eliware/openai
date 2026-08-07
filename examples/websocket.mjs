@@ -9,5 +9,5 @@ try {
   const response = await openai.responses.create({ model: 'gpt-5.6-luna', input: 'Say hello.' });
   console.log(response.output);
 } finally {
-  openai.responses.close();
+  await openai.responses.close();
 }
