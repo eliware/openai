@@ -27,6 +27,12 @@
 - Configurable WebSocket reconnect behavior and queueing
 - Example usage and tests included
 
+## Requirements
+
+- Node.js 26 or newer
+- An OpenAI API key for OpenAI usage
+- Azure endpoint, API key, and API version for Azure usage
+
 ## Installation
 
 ```bash
@@ -121,6 +127,24 @@ const openai = createAzureOpenAI({ deployment: 'gpt-5.6-luna' });
 ```
 
 Both helpers throw clear errors when required configuration is missing.
+
+## Errors / Troubleshooting
+
+`createOpenAI` requires an API key from `apiKey` or `OPENAI_API_KEY`. Azure usage requires the corresponding Azure options or environment variables. Transport, timeout, retry, abort, and WebSocket shutdown errors preserve available upstream context. Always await `responses.close()` for WebSocket clients.
+
+## Development
+
+```bash
+npm test
+npm run test:gaps
+npm run lint
+npm run typecheck
+npm run pack
+```
+
+## Security
+
+Treat API keys and endpoint credentials as secrets. Store them in environment variables or a secret manager; never commit `.env` files, log credentials, or expose keys in examples.
 
 ## TypeScript
 
