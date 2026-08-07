@@ -1,5 +1,12 @@
 # Release Notes
 
+## 1.1.11 — August 7, 2026
+
+- Aligned repository structure, package metadata, validation scripts, CI, documentation, and release notes with Eliware library conventions.
+- Added TypeScript declaration checking and standardized package dry-run validation.
+- Updated `ws` to 8.21.3 and moved tests under `tests/`.
+- Verification: tests, 100% coverage, gap checks, lint, typecheck, pack, smoke test, and production audit pass.
+
 ## 1.1.10
 
 - Normalized package metadata formatting while preserving the public API and dependency set.
