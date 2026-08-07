@@ -85,7 +85,7 @@ for await (const event of events) console.log(event);
 
 `create()` and `stream()` accept `{ signal }`. Completed responses resolve normally; failed, incomplete, socket-error, and premature-close events reject with `ResponsesError`, which preserves the original event and available error metadata. `responses.close()` is awaitable.
 
-Callbacks are available through `createWithEvents()` without changing the normal event iterator API:
+Callbacks are available through `createWithEvents()` (and the second argument to `create()`). AgentX-compatible lifecycle callbacks include `onResponseCreated`, `onResponseProgress`, `onContentPartAdded`, `onContentPartDone`, `onTextDone`, and `onResponseCompleted`. without changing the normal event iterator API:
 
 ```js
 await openai.responses.createWithEvents(request, {
@@ -156,6 +156,7 @@ Handle these tool/event families in the iterator or `onEvent` callback:
 
 - `response.output_item.added` / `response.output_item.done`
 - `response.function_call_arguments.delta` / `.done`
+- `response.shell_call_command.delta` / `.done`
 - `response.custom_tool_call_input.delta` / `.done`
 - `response.mcp_call_arguments.delta` / `.done`
 - reasoning summary/text delta and done events

@@ -127,3 +127,21 @@ test('covers HTTP adapter defaults, request options, and every callback branch',
   })) void event;
   expect(calls).toEqual(['response.output_text.delta', 'text', 'response.output_item.added', 'added', 'response.output_item.done', 'done', 'response.completed', 'resp']);
 });
+
+test('supports AgentX lifecycle callbacks over HTTP', async () => {
+  const calls = [];
+  const adapter = createHTTPResponsesAdapter({ create: async function* () {
+    yield { type: 'response.created', response: { id: 'r' } };
+    yield { type: 'response.in_progress', response: { id: 'r' } };
+    yield { type: 'response.content_part.added', part: {} };
+    yield { type: 'response.content_part.done', part: {} };
+    yield { type: 'response.output_text.done', text: 'done' };
+    yield { type: 'response.completed', response: { id: 'r' } };
+  } });
+  await adapter.createWithEvents({ stream: true }, {
+    onResponseCreated: value => calls.push(value), onResponseProgress: value => calls.push(value),
+    onContentPartAdded: value => calls.push(value), onContentPartDone: value => calls.push(value),
+    onTextDone: value => calls.push(value), onResponseCompleted: value => calls.push(value),
+  });
+  expect(calls).toHaveLength(6);
+});

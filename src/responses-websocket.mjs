@@ -21,12 +21,18 @@ export class ResponsesWebSocketAdapter {
   createWithEvents(input = {}, handlers = {}) { return this.create(input, handlers); }
   events(response = {}, options = {}) { return this._request(response, options); }
   _handleEvent(event, handlers = {}) {
-    handlers.onEvent?.(event);
+    handlers.onEvent?.(event, event.raw);
+    if (event.type === 'response.created') handlers.onResponseCreated?.(event.response, event);
+    if (event.type === 'response.in_progress') handlers.onResponseProgress?.(event.response, event);
+    if (event.type === 'response.content_part.added') handlers.onContentPartAdded?.(event.part, event);
+    if (event.type === 'response.content_part.done') handlers.onContentPartDone?.(event.part, event);
     if (event.type === 'response.output_text.delta') handlers.onTextDelta?.(event.delta, event);
+    if (event.type === 'response.output_text.done') handlers.onTextDone?.(event.text, event);
     if (event.type === 'response.output_item.added') handlers.onItemAdded?.(event.item, event);
     if (event.type === 'response.output_item.done') handlers.onItemDone?.(event.item, event);
+    if (event.type === 'response.completed') handlers.onResponseCompleted?.(event.response, event);
   }
-  async *_request(response, { signal, onEvent, onTextDelta, onItemAdded, onItemDone, onCompleted, onError } = {}) {
+  async *_request(response, { signal, onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted, onError } = {}) {
     const abort = () => abortError(signal);
     if (signal?.aborted) { const error = abort(); onError?.(error, { type: 'abort' }); throw error; }
     const events = this.socket.stream();
@@ -53,9 +59,9 @@ export class ResponsesWebSocketAdapter {
         const event = result.value;
         if (event.type === 'message') {
           const message = normalizeEvent(event.message, event);
-          this._handleEvent(message, { onEvent, onTextDelta, onItemAdded, onItemDone });
+          this._handleEvent(message, { onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted });
           yield message;
-          if (message.type === 'response.completed') { onCompleted?.(message.response, message); return; }
+          if (message.type === 'response.completed') { onCompleted?.(message.response, message); onResponseCompleted?.(message.response, message); return; }
           if (message.type === 'response.failed') { const error = new ResponsesError(message.error?.message ?? 'Response failed', { event: message }); onError?.(error, message); throw error; }
           if (message.type === 'response.incomplete') { const error = new ResponsesError(message.incomplete_details?.reason ?? 'Response incomplete', { event: message }); onError?.(error, message); throw error; }
         } else if (event.type === 'reconnecting' || event.type === 'reconnected' || event.type === 'connecting' || event.type === 'open') {

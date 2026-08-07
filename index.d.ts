@@ -25,10 +25,16 @@ export type ResponsesOutputItem = ResponseOutputItem;
 export type ResponsesEventHandlerOptions = {
   signal?: AbortSignal;
   onEvent?: (event: ResponsesEvent) => void;
+  onResponseCreated?: (response: ResponsesResponse, event: ResponsesEvent) => void;
+  onResponseProgress?: (response: ResponsesResponse, event: ResponsesEvent) => void;
+  onContentPartAdded?: (part: unknown, event: ResponsesEvent) => void;
+  onContentPartDone?: (part: unknown, event: ResponsesEvent) => void;
   onTextDelta?: (delta: string, event: ResponsesEvent) => void;
+  onTextDone?: (text: string, event: ResponsesEvent) => void;
   onItemAdded?: (item: ResponsesOutputItem, event: ResponsesEvent) => void;
   onItemDone?: (item: ResponsesOutputItem, event: ResponsesEvent) => void;
   onCompleted?: (response: ResponsesResponse, event: ResponsesEvent) => void;
+  onResponseCompleted?: (response: ResponsesResponse, event: ResponsesEvent) => void;
   onError?: (error: Error, event: ResponsesEvent) => void;
 };
 

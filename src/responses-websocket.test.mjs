@@ -239,3 +239,25 @@ test('handles close failure', async () => {
   adapter.socket.close = () => { throw new Error('close failed'); };
   await expect(adapter.close()).rejects.toThrow('close failed');
 });
+
+test('supports AgentX lifecycle callbacks', () => {
+  const adapter = make(); const calls = [];
+  const handlers = {
+    onEvent: (_event, raw) => calls.push(['event', raw]),
+    onResponseCreated: value => calls.push(['created', value]),
+    onResponseProgress: value => calls.push(['progress', value]),
+    onContentPartAdded: value => calls.push(['part+', value]),
+    onContentPartDone: value => calls.push(['part-', value]),
+    onTextDone: value => calls.push(['text-', value]),
+    onResponseCompleted: value => calls.push(['completed', value]),
+  };
+  for (const event of [
+    { type: 'response.created', response: { id: 'r' } },
+    { type: 'response.in_progress', response: { id: 'r' } },
+    { type: 'response.content_part.added', part: { type: 'text' } },
+    { type: 'response.content_part.done', part: { type: 'text' } },
+    { type: 'response.output_text.done', text: 'done' },
+    { type: 'response.completed', response: { id: 'r' }, raw: { wire: true } },
+  ]) adapter._handleEvent(event, handlers);
+  expect(calls).toHaveLength(12);
+});

@@ -1,7 +1,7 @@
 import { normalizeEvent } from './events.mjs';
 import { responsesErrorFrom } from './errors.mjs';
 
-const HANDLER_KEYS = ['signal', 'onEvent', 'onTextDelta', 'onItemAdded', 'onItemDone', 'onCompleted', 'onError'];
+const HANDLER_KEYS = ['signal', 'onEvent', 'onTextDelta', 'onTextDone', 'onItemAdded', 'onItemDone', 'onResponseCreated', 'onResponseProgress', 'onContentPartAdded', 'onContentPartDone', 'onResponseCompleted', 'onCompleted', 'onError'];
 
 function splitOptions(options) {
   const handlers = {};
@@ -17,10 +17,15 @@ function splitOptions(options) {
 
 function dispatch(event, handlers) {
   const normalized = normalizeEvent(event);
-  handlers.onEvent?.(normalized);
+  handlers.onEvent?.(normalized, normalized.raw);
+  if (normalized?.type === 'response.created') handlers.onResponseCreated?.(normalized.response, normalized);
+  if (normalized?.type === 'response.in_progress') handlers.onResponseProgress?.(normalized.response, normalized);
+  if (normalized?.type === 'response.content_part.added') handlers.onContentPartAdded?.(normalized.part, normalized);
+  if (normalized?.type === 'response.content_part.done') handlers.onContentPartDone?.(normalized.part, normalized);
   if (normalized?.type === 'response.output_text.delta') handlers.onTextDelta?.(normalized.delta, normalized);
+  if (normalized?.type === 'response.output_text.done') handlers.onTextDone?.(normalized.text, normalized);
   if (normalized?.type === 'response.output_item.added') handlers.onItemAdded?.(normalized.item, normalized);
-  if (normalized?.type === 'response.output_item.done') handlers.onItemDone?.(normalized.item, normalized); if (normalized?.type === 'response.completed') handlers.onCompleted?.(normalized.response, normalized);
+  if (normalized?.type === 'response.output_item.done') handlers.onItemDone?.(normalized.item, normalized); if (normalized?.type === 'response.completed') { handlers.onCompleted?.(normalized.response, normalized); handlers.onResponseCompleted?.(normalized.response, normalized); }
   return normalized;
 }
 
