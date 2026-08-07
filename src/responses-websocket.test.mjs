@@ -261,3 +261,24 @@ test('supports AgentX lifecycle callbacks', () => {
   ]) adapter._handleEvent(event, handlers);
   expect(calls).toHaveLength(12);
 });
+
+test('bounds close and terminates an unresponsive socket', async () => {
+  const adapter = make(); let terminated = 0;
+  adapter.socket.socket = { readyState: 1, once(event, listener) { this[event] = listener; }, removeListener() {}, terminate() { terminated += 1; } };
+  adapter.socket.close = () => {};
+  await expect(adapter.close({ timeout: 1 })).rejects.toMatchObject({ name: 'ResponsesError', message: 'Responses WebSocket close timed out', code: 'timeout' });
+  expect(terminated).toBe(1);
+});
+
+test('fires completion callbacks once each', async () => {
+  FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.completed', response: { id: 'r' } } }];
+  const adapter = make(); const calls = [];
+  await adapter.create({}, { onCompleted: () => calls.push('completed'), onResponseCompleted: () => calls.push('responseCompleted') });
+  expect(calls).toEqual(['responseCompleted', 'completed']);
+});
+
+test('accepts null close options', async () => {
+  const adapter = make();
+  adapter.socket.socket = { readyState: 1 };
+  await adapter.close(null);
+});

@@ -83,7 +83,7 @@ const events = openai.responses.events({ model: 'gpt-5.6-luna', input: 'Hello' }
 for await (const event of events) console.log(event);
 ```
 
-`create()` and `stream()` accept `{ signal }`. Completed responses resolve normally; failed, incomplete, socket-error, and premature-close events reject with `ResponsesError`, which preserves the original event and available error metadata. `responses.close()` is awaitable.
+`create()` and `stream()` accept `{ signal }`. Completed responses resolve normally; failed, incomplete, socket-error, and premature-close events reject with `ResponsesError`, which preserves the original event and available error metadata. `responses.close()` is awaitable and bounded; use `await responses.close({ timeout: 30_000 })` to control the shutdown deadline. On timeout it terminates the socket when supported and rejects with `ResponsesError`.
 
 Callbacks are available through `createWithEvents()` (and the second argument to `create()`). AgentX-compatible lifecycle callbacks include `onResponseCreated`, `onResponseProgress`, `onContentPartAdded`, `onContentPartDone`, `onTextDone`, and `onResponseCompleted`. without changing the normal event iterator API:
 

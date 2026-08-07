@@ -61,7 +61,7 @@ export class ResponsesWebSocketAdapter {
           const message = normalizeEvent(event.message, event);
           this._handleEvent(message, { onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted });
           yield message;
-          if (message.type === 'response.completed') { onCompleted?.(message.response, message); onResponseCompleted?.(message.response, message); return; }
+          if (message.type === 'response.completed') { onCompleted?.(message.response, message); return; }
           if (message.type === 'response.failed') { const error = new ResponsesError(message.error?.message ?? 'Response failed', { event: message }); onError?.(error, message); throw error; }
           if (message.type === 'response.incomplete') { const error = new ResponsesError(message.incomplete_details?.reason ?? 'Response incomplete', { event: message }); onError?.(error, message); throw error; }
         } else if (event.type === 'reconnecting' || event.type === 'reconnected' || event.type === 'connecting' || event.type === 'open') {
@@ -97,25 +97,32 @@ export class ResponsesWebSocketAdapter {
   }
   isOpen() { return this.socket.socket?.readyState === 1; }
   get state() { return ['connecting', 'open', 'closing', 'closed'][this.socket.socket?.readyState ?? 3]; }
-  close(props) {
+  close(props = {}) {
     if (this._closed) return this._closePromise;
     this._closed = true;
+    const { timeout = 30_000, ...socketProps } = props ?? {};
     this._closePromise = (async () => {
       await Promise.all([...this._activeStreams].map(stream => stream.return?.()));
       return new Promise((resolve, reject) => {
-      const socket = this.socket.socket;
-      let settled = false;
-      const done = error => { if (settled) return; settled = true; socket.removeListener?.('close', onClose); socket.removeListener?.('error', onError); if (error) reject(error); else resolve(); };
-      const onClose = () => done();
-      const onError = error => done(error);
-      if (socket.once) { socket.once('close', onClose); socket.once('error', onError); }
-      try {
-        this.socket.close(props);
-        if (socket.readyState === 3) done();
-        else if (!socket.once) {
-          done();
-        }
-      } catch (error) { done(error); }
+        const socket = this.socket.socket;
+        let settled = false;
+        let timer;
+        const cleanup = () => { clearTimeout(timer); socket.removeListener?.('close', onClose); socket.removeListener?.('error', onError); };
+        const done = error => { if (settled) return; settled = true; cleanup(); if (error) reject(error); else resolve(); };
+        const onClose = () => done();
+        const onError = error => done(error);
+        const onTimeout = () => {
+          try { socket.terminate?.(); } catch { /* best effort */ }
+          done(new ResponsesError('Responses WebSocket close timed out', { event: { type: 'close', code: 'timeout' } }));
+        };
+        if (socket.once) { socket.once('close', onClose); socket.once('error', onError); }
+        timer = setTimeout(onTimeout, timeout);
+        timer.unref?.();
+        try {
+          this.socket.close(socketProps);
+          if (socket.readyState === 3) done();
+          else if (!socket.once) done();
+        } catch (error) { done(error); }
       });
     })();
     return this._closePromise;

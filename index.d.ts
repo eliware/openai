@@ -90,7 +90,7 @@ export interface ResponsesWebSocketAdapter {
   ready(): Promise<void>;
   isOpen(): boolean;
   readonly state: 'connecting' | 'open' | 'closing' | 'closed';
-  close(options?: { code?: number; reason?: string }): Promise<void>;
+  close(options?: { code?: number; reason?: string; timeout?: number }): Promise<void>;
   on(event: string, listener: (...args: unknown[]) => void): this;
   off(event: string, listener: (...args: unknown[]) => void): this;
 }
