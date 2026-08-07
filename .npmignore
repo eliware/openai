@@ -1,0 +1,3 @@
+src/**/*.test.mjs
+coverage
+.env

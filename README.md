@@ -76,6 +76,32 @@ for await (const event of events) console.log(event);
 openai.responses.close();
 ```
 
+The WebSocket adapter also exposes a transport-neutral event iterator. Use `events()` when you need protocol events without collecting a final response:
+
+```js
+const events = openai.responses.events({ model: 'gpt-5.6-luna', input: 'Hello' }, { signal });
+for await (const event of events) console.log(event);
+```
+
+`create()` and `stream()` accept `{ signal }`. Completed responses resolve normally; failed, incomplete, socket-error, and premature-close events reject with `ResponsesError`, which preserves the original event and available error metadata. `responses.close()` is awaitable.
+
+Callbacks are available through `createWithEvents()` without changing the normal event iterator API:
+
+```js
+await openai.responses.createWithEvents(request, {
+  onEvent: event => {},
+  onTextDelta: (delta, event) => {},
+  onItemAdded: (item, event) => {},
+  onItemDone: (item, event) => {},
+  onCompleted: (response, event) => {},
+  onError: (error, event) => {},
+});
+```
+
+For deterministic tests, `createMockResponsesTransport(events)` returns an injectable WebSocket implementation.
+
+For tests or alternate runtimes, provide `WebSocketImpl` and optionally `url` in the client options. The adapter exposes `await responses.ready()`, `responses.isOpen()`, and `responses.state` (`connecting`, `open`, `closing`, or `closed`). Events include `raw`, `responseId`, and `requestId` when supplied by the server.
+
 The WebSocket adapter also supports the familiar `responses.stream()` helper and preserves `inputItems` and `inputTokens` resources. The connection remains available while the client is retained. Automatic reconnect is opt-in: configure it with `reconnect`. The WebSocket adapter
 continues to expose HTTP Responses helpers such as `retrieve`, `delete`, `cancel`, and
 `parse`. Call `responses.close()` during shutdown.
@@ -120,3 +146,16 @@ For help, questions, or to chat with the author and community, visit:
 - [GitHub](https://github.com/eliware/openai)
 - [npm](https://www.npmjs.com/package/@eliware/openai)
 - [Discord](https://discord.gg/M6aTR9eTwN)
+
+#### Tool and item streaming
+
+The event iterator and callbacks preserve protocol event types. Consumers should handle
+`response.output_item.added`/`done`, function-call argument deltas, shell-call command
+deltas, MCP argument deltas, reasoning summary events, and text deltas in their event
+handlers. Submit tool results using the normal Responses API request with
+`previous_response_id`; tool execution and confirmation remain the application's
+responsibility.
+
+`raw` contains the original transport event. `responseId` and `requestId` are populated
+when supplied by the server. `onError` is called for protocol failures, socket failures,
+premature close, abort, and stream exhaustion.
