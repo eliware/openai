@@ -2,7 +2,7 @@ import { jest, expect, test, describe } from '@jest/globals';
 class FakeResponsesWS { _createSocket() { return { readyState: 1 }; } constructor() { this.handlers = new Map(); this.sent = []; this.socket = { readyState: 1 }; } send(event) { this.sent.push(event); } async *stream() { for (const event of FakeResponsesWS.events ?? [{ type: 'message', message: { type: 'response.output_text.delta', delta: 'hi' } }, { type: 'message', message: { type: 'response.completed', response: { status: 'completed' } } }]) yield event; FakeResponsesWS.events = undefined; } close(props) { this.closed = props ?? true; } on(event, listener) { this.handlers.set(event, listener); return this; } off(event) { this.handlers.delete(event); return this; } }
 jest.unstable_mockModule('openai/resources/responses/ws', () => ({ ResponsesWS: FakeResponsesWS }));
 jest.unstable_mockModule('ws', () => ({ WebSocket: class DefaultSocket { constructor() { this.readyState = 1; } on() {} removeListener() {} send() {} close() {} } }));
-const { ResponsesWebSocketAdapter } = await import('../src/responses-websocket/index.mjs');
+const { ResponsesWebSocketAdapter } = await import('../../src/responses-websocket/index.mjs');
 const make = (http = {}) => new ResponsesWebSocketAdapter({}, {}, http);
 
 describe('ResponsesWebSocketAdapter', () => {
