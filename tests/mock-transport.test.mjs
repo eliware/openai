@@ -15,7 +15,7 @@ test('supports delayed events, sent payloads, errors, reconnects, and listeners'
   socket.once('open', () => seen.push('open')); socket.on('message', data => seen.push(JSON.parse(data).type)); socket.on('close', onClose);
   expect(socket.readyState).toBe(0); socket.readyState = 1; socket.emit('open'); socket.send(JSON.stringify({ type: 'response.create' })); await new Promise(resolve => setTimeout(resolve, 5));
   expect(socket.sent).toEqual([{ type: 'response.create' }]); expect(seen).toEqual(['open', 'response.output_text.delta']);
-  socket.error(new Error('boom')); socket.reconnect(); expect(seen).toContain('close:1006'); socket.removeListener('close', onClose); socket.close(1001, 'done'); expect(socket.closed).toEqual({ code: 1001, reason: 'done' });
+  socket.error(new Error('boom')); socket.removeListener('close', onClose); socket.close(1001, 'done'); expect(socket.closed).toEqual({ code: 1001, reason: 'done' });
 });
 
 test('supports empty events and explicit close arguments', async () => {
@@ -38,7 +38,7 @@ test('supports AgentX protocol scenario events', async () => {
   const Mock = createMockResponsesTransport(scenario); const socket = new Mock(); const seen = [];
   socket.on('message', data => seen.push(JSON.parse(data).type)); socket.send('{}'); await new Promise(resolve => setTimeout(resolve, 5));
   expect(seen).toEqual(scenario.map(event => event.type));
-  socket.reconnect(); socket.error(); socket.close(1001, 'done');
+  socket.error(); socket.close(1001, 'done');
   expect(socket.closed).toEqual({ code: 1001, reason: 'done' });
 });
 

@@ -23,7 +23,6 @@ export function createMockResponsesTransport(events = [], options = {}) {
     }
     push(...messages) { if (this.readyState === 3) return this; for (const event of messages) this.emit('message', JSON.stringify(event), false); return this; }
     error(error = new Error('mock socket error')) { this.emit('error', error); return this; }
-    reconnect() { this.readyState = 0; this.emit('close', 1006, 'reconnecting'); this.readyState = 1; this.emit('open'); return this; }
     close(code = 1000, reason = 'OK') { if (this.readyState === 3) return this; this.readyState = 3; for (const timer of this._timers) clearTimeout(timer); this._timers.clear(); this.closed = { code, reason }; this.emit('close', code, reason); return this; }
   };
 }
