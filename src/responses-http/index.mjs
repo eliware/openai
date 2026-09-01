@@ -9,8 +9,11 @@ export function createHTTPResponsesAdapter(responses) {
     const { handlers: inputHandlers, requestOptions: requestInput } = splitOptions(input);
     const { handlers: optionHandlers, requestOptions } = splitOptions(options);
     const handlers = { ...inputHandlers, ...optionHandlers };
-    const result = responses.create(requestInput, requestOptions);
-    if (!requestInput.stream) {
+    const streaming = requestInput.stream ?? requestOptions.stream;
+    delete requestInput.stream;
+    delete requestOptions.stream;
+    const result = responses.create({ ...requestInput, stream: streaming }, requestOptions);
+    if (!streaming) {
       return Promise.resolve(result).then(response => {
         const event = normalizeEvent({ type: 'response.completed', response });
         dispatch(event, handlers);
@@ -31,8 +34,9 @@ export function createHTTPResponsesAdapter(responses) {
   };
   adapter.events = (input = {}, options = {}) => adapter.create({ ...input, stream: true }, options);
   adapter.stream = (input = {}, options = {}) => {
-    const { handlers, requestOptions } = splitOptions(options);
-    return wrapHTTPStream(responses.stream(input, requestOptions), handlers);
+    const { handlers: inputHandlers, requestOptions: requestInput } = splitOptions(input);
+    const { handlers: optionHandlers, requestOptions } = splitOptions(options);
+    return wrapHTTPStream(responses.stream(requestInput, requestOptions), { ...inputHandlers, ...optionHandlers });
   };
   return adapter;
 }

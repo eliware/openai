@@ -122,7 +122,7 @@ test('covers HTTP adapter defaults, request options, and every callback branch',
   for await (const event of adapter.events()) void event;
   for await (const event of adapter.stream()) void event;
   for await (const event of adapter.create({ stream: true }, {
-    signal: 'signal', onEvent: event => calls.push(event.type), onTextDelta: value => calls.push(value),
+    signal: new AbortController().signal, onEvent: event => calls.push(event.type), onTextDelta: value => calls.push(value),
     onItemAdded: item => calls.push(item.id), onItemDone: item => calls.push(item.id), onCompleted: value => calls.push(value.id),
   })) void event;
   expect(calls).toEqual(['response.output_text.delta', 'text', 'response.output_item.added', 'added', 'response.output_item.done', 'done', 'response.completed', 'resp']);
@@ -149,4 +149,5 @@ test('supports AgentX lifecycle callbacks over HTTP', async () => {
 test('validates callback types', () => {
   const adapter = createHTTPResponsesAdapter({ create: async () => ({}) });
   expect(() => adapter.create({}, { onError: true })).toThrow('onError must be a function');
+  expect(() => adapter.create({}, { signal: 'invalid' })).toThrow('signal must be an AbortSignal');
 });

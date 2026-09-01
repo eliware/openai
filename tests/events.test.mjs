@@ -24,6 +24,6 @@ test('normalizes HTTP and transport envelopes to the same shape', async () => {
   });
 });
 
-test('falls back to output item ID', () => {
-  expect(normalizeEvent({ item: { id: 'item_1' } })).toMatchObject({ responseId: 'item_1' });
+test('does not mislabel output item ID as response ID', () => {
+  expect(normalizeEvent({ item: { id: 'item_1' } })).toMatchObject({ responseId: undefined });
 });

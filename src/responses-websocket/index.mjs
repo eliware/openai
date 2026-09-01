@@ -1,21 +1,29 @@
 import { ResponsesError, abortError, responsesWebSocketError } from '../errors.mjs';
 import { normalizeEvent } from '../events.mjs';
 import { InjectableResponsesWS } from './socket.mjs';
-import { dispatch } from '../responses-http/callbacks.mjs';
+import { dispatch, splitOptions } from '../responses-http/callbacks.mjs';
 export class ResponsesWebSocketAdapter {
   constructor(client, options = {}, httpResponses = client.responses) { this.socket = new InjectableResponsesWS(client, options); this.httpResponses = httpResponses; this.inputItems = httpResponses?.inputItems; this.inputTokens = httpResponses?.inputTokens; this._readyPromise = null; this._closed = false; this._activeStreams = new Set(); this._requestActive = false; }
   create(input = {}, options = {}) { if (this._closed) return Promise.reject(new ResponsesError('Responses WebSocket is closed')); const { stream = false, ...response } = input; const iterator = this.events(response, options); if (stream) return iterator; return (async () => { let completed; for await (const event of iterator) if (event.type === 'response.completed') completed = event.response; return completed; })(); }
+  // Intentional API behavior: createWithEvents consumes a stream while invoking
+  // callbacks, matching the HTTP facade and returning completion only.
   createWithEvents(input = {}, handlers = {}) { if (input.stream) return (async () => { for await (const event of this.create(input, handlers)) void event; })(); return this.create(input, handlers); }
   events(response = {}, options = {}) { return this._request(response, options); }
   _handleEvent(event, handlers = {}) { return dispatch(event, handlers); }
-  async *_request(response, { signal, onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted, onError } = {}) {
+  async *_request(response, options = {}) {
+    const { handlers, requestOptions } = splitOptions(options);
+    const { signal, onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted, onError } = { ...requestOptions, ...handlers };
     const abort = () => abortError(signal);
     if (signal?.aborted) { const error = abort(); onError?.(error, { type: 'abort' }); throw error; }
+    // Intentional 2.0 contract: one response stream per adapter avoids
+    // misrouting events because the upstream protocol has no request ID.
     if (this._requestActive) throw new ResponsesError('Concurrent Responses WebSocket requests are not supported');
     this._requestActive = true;
     const events = this.socket.stream();
     this._activeStreams.add(events);
     let aborted = false;
+    // Promise.race settles the consumer immediately; return() then gives the
+    // upstream iterator its best-effort cancellation hook.
     const onAbort = () => { aborted = true; try { if (this.isOpen()) this.socket.send({ type: 'response.cancel' }); } finally { void events.return?.(); } };
     const next = () => {
       if (!signal) return events.next();
@@ -103,6 +111,7 @@ export class ResponsesWebSocketAdapter {
         const onClose = () => done();
         const onError = error => done(error);
         const onTimeout = () => {
+          // The timeout is the bounded guarantee even when terminate is absent.
           try { socket.terminate?.(); } catch { /* best effort */ }
           done(new ResponsesError('Responses WebSocket close timed out', { event: { type: 'close', code: 'timeout' } }));
         };
@@ -111,7 +120,7 @@ export class ResponsesWebSocketAdapter {
         try {
           if (typeof this.socket.close !== 'function') { done(); return; }
           this.socket.close(socketProps);
-          if (socket.readyState === 3) done();
+          if (socket.readyState === 3) { this._closed = true; done(); }
           else if (!socket.once) done();
         } catch (error) { done(error); }
       });

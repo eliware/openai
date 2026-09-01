@@ -1,11 +1,12 @@
 import { ResponsesWS } from '../transports/responses-websocket.mjs';
 import { WebSocket as NodeWebSocket } from 'ws';
 
+const pendingURLs = new WeakMap();
+
 function prepareClient(client, url) {
   if (!url) return { client, baseURL: undefined };
-  const baseURL = client.baseURL;
-  client.baseURL = url;
-  return { client, baseURL };
+  pendingURLs.set(client, url);
+  return { client, baseURL: undefined };
 }
 
 export class NodeSocketAdapter {
@@ -19,6 +20,6 @@ export class NodeSocketAdapter {
 }
 
 export class InjectableResponsesWS extends ResponsesWS {
-  constructor(client, options) { const prepared = prepareClient(client, options.url); super(prepared.client, options); if (prepared.baseURL) client.baseURL = prepared.baseURL; this._customWebSocket = options.WebSocketImpl; this._customURL = options.url; }
-  _createSocket(url, authHeaders) { if (!this._customWebSocket && !this._customURL) return super._createSocket(url, authHeaders); const Impl = this._customWebSocket ?? NodeWebSocket; if (typeof Impl !== 'function') throw new TypeError('WebSocketImpl must be a WebSocket constructor'); return new NodeSocketAdapter(new Impl(this._customURL ?? url, { headers: authHeaders })); }
+  constructor(client, options) { const prepared = prepareClient(client, options.url); super(prepared.client, options); pendingURLs.delete(client); this._customWebSocket = options.WebSocketImpl; this._customURL = options.url; }
+  _createSocket(url, authHeaders) { const customURL = this._customURL ?? pendingURLs.get(this._client); if (!this._customWebSocket && !customURL) return super._createSocket(url, authHeaders); const Impl = this._customWebSocket ?? NodeWebSocket; if (typeof Impl !== 'function') throw new TypeError('WebSocketImpl must be a WebSocket constructor'); return new NodeSocketAdapter(new Impl(customURL ?? url, { headers: authHeaders })); }
 }
