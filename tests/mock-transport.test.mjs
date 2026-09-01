@@ -55,6 +55,12 @@ test('covers mock transport fallback branches and dynamic event factory', async 
   socket.close(); socket.close(); expect(socket.closed.code).toBe(1000);
 });
 
+test('rejects invalid event factory output', () => {
+  const Socket = createMockResponsesTransport([], { events: () => null });
+  const socket = new Socket();
+  expect(() => socket.send('{}')).toThrow('event factory');
+});
+
 test('covers mock defaults and once/off lifecycle', async () => {
   const Mock = createMockResponsesTransport(); const socket = new Mock(); let opens = 0;
   socket.once('open', () => { opens += 1; });

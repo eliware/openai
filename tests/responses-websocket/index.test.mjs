@@ -219,6 +219,18 @@ test('covers request options default', async () => {
   for await (const event of events) expect(event).toBeTruthy();
 });
 
+test('reports readiness and iterator failures through onError', async () => {
+  const ready = make(); ready.socket.socket.readyState = 0; FakeResponsesWS.events = [{ type: 'error', error: new Error('not ready') }]; const readyErrors = [];
+  await expect(ready.create({}, { onError: error => readyErrors.push(error) })).rejects.toThrow('not ready'); expect(readyErrors).toHaveLength(1);
+  const iterator = make(); iterator.socket.stream = () => ({ [Symbol.asyncIterator]() { return this; }, next: async () => { throw new Error('iterator'); }, return: async () => ({ done: true }) }); const iteratorErrors = [];
+  await expect(iterator.create({}, { onError: error => iteratorErrors.push(error) })).rejects.toThrow('iterator'); expect(iteratorErrors).toHaveLength(1);
+});
+
+test('closes safely without a socket or close method', async () => {
+  const missing = make(); missing.socket.socket = undefined; await expect(missing.close()).resolves.toBeUndefined();
+  const noClose = make(); noClose.socket.close = undefined; await expect(noClose.close()).resolves.toBeUndefined();
+});
+
 test('shares pending readiness work', async () => {
   const adapter = make();
   adapter.socket.socket = { readyState: 0 };

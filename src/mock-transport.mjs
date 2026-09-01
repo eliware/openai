@@ -17,6 +17,7 @@ export function createMockResponsesTransport(events = [], options = {}) {
     send(data) {
       this.sent.push(typeof data === 'string' ? JSON.parse(data) : data);
       const batch = typeof defaults.events === 'function' ? defaults.events(data, this) : this._events;
+      if (!Array.isArray(batch)) throw new TypeError('Mock transport event factory must return an array');
       for (const event of batch) setTimeout(() => this.emit('message', JSON.stringify(event), false), defaults.delay);
       return this;
     }
