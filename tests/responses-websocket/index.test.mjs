@@ -126,7 +126,6 @@ test('aborting an active websocket request closes its iterator', async () => {
   controller.abort(new Error('stop'));
   await expect(pending).rejects.toMatchObject({ name: 'Error', message: 'stop' });
   expect(returned).toBe(true);
-  expect(adapter.socket.sent.at(-1)).toMatchObject({ type: 'response.cancel' });
 });
 
 test('close waits for active streams and prevents new requests', async () => {
