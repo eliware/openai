@@ -2,7 +2,7 @@ import { ResponsesError, abortError } from '../errors.mjs';
 import { normalizeEvent } from '../events.mjs';
 import { InjectableResponsesWS } from './socket.mjs';
 export class ResponsesWebSocketAdapter {
-  constructor(client, options = {}, httpResponses = client.responses) { this.socket = new InjectableResponsesWS(client, options); this.httpResponses = httpResponses; this.inputItems = httpResponses?.inputItems; this.inputTokens = httpResponses?.inputTokens; this._readyPromise = null; this._closed = false; this._activeStreams = new Set(); this._requestLock = Promise.resolve(); }
+  constructor(client, options = {}, httpResponses = client.responses) { this.socket = new InjectableResponsesWS(client, options); this.httpResponses = httpResponses; this.inputItems = httpResponses?.inputItems; this.inputTokens = httpResponses?.inputTokens; this._readyPromise = null; this._closed = false; this._activeStreams = new Set(); }
   create(input = {}, options = {}) { if (this._closed) return Promise.reject(new ResponsesError('Responses WebSocket is closed')); const { stream = false, ...response } = input; const iterator = this.events(response, options); if (stream) return iterator; return (async () => { let completed; for await (const event of iterator) if (event.type === 'response.completed') completed = event.response; return completed; })(); }
   createWithEvents(input = {}, handlers = {}) { if (input.stream) return (async () => { for await (const event of this.create(input, handlers)) void event; })(); return this.create(input, handlers); }
   events(response = {}, options = {}) { return this._request(response, options); }
@@ -21,10 +21,6 @@ export class ResponsesWebSocketAdapter {
   async *_request(response, { signal, onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted, onError } = {}) {
     const abort = () => abortError(signal);
     if (signal?.aborted) { const error = abort(); onError?.(error, { type: 'abort' }); throw error; }
-    let release;
-    const previous = this._requestLock;
-    this._requestLock = new Promise(resolve => { release = resolve; });
-    await previous;
     const events = this.socket.stream();
     this._activeStreams.add(events);
     let aborted = false;
@@ -71,7 +67,7 @@ export class ResponsesWebSocketAdapter {
         }
       }
       const error = new ResponsesError('Responses WebSocket ended before completion', { event: { type: 'end' } }); onError?.(error, normalizeEvent({ type: 'end' })); throw error;
-    } finally { signal?.removeEventListener('abort', onAbort); this._activeStreams.delete(events); await events.return?.(); release(); }
+    } finally { signal?.removeEventListener('abort', onAbort); this._activeStreams.delete(events); await events.return?.(); }
   }
 
   stream(input = {}, options = {}) { return this.create({ ...input, stream: true }, options); }

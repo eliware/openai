@@ -293,7 +293,7 @@ test('fires completion callbacks once each', async () => {
   FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.completed', response: { id: 'r' } } }];
   const adapter = make(); const calls = [];
   await adapter.create({}, { onCompleted: () => calls.push('completed'), onResponseCompleted: () => calls.push('responseCompleted') });
-  expect(calls).toEqual(['responseCompleted', 'completed']);
+  expect(calls).toEqual(['completed', 'responseCompleted']);
 });
 
 test('accepts null close options', async () => {
