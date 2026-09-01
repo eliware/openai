@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-export { createOpenAI, createAzureOpenAI } from './src/client.mjs';
+export { createOpenAI } from './src/client.mjs';
 export { ResponsesError } from './src/errors.mjs';
 export { normalizeEvent, eventErrorDetails } from './src/events.mjs';
 export { ResponsesWebSocketAdapter } from './src/responses-websocket/index.mjs';

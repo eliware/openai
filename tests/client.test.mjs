@@ -8,7 +8,7 @@ class FakeResponsesWS {
   off(event) { this.handlers.delete(event); return this; }
 }
 jest.unstable_mockModule('openai/resources/responses/ws', () => ({ ResponsesWS: FakeResponsesWS }));
-const { createOpenAI, createAzureOpenAI } = await import('../src/client.mjs');
+const { createOpenAI } = await import('../src/client.mjs');
 afterEach(() => { delete process.env.OPENAI_API_KEY; delete process.env.AZURE_OPENAI_API_KEY; delete process.env.AZURE_OPENAI_ENDPOINT; delete process.env.OPENAI_API_VERSION; FakeResponsesWS.events = undefined; });
 
 describe('createOpenAI', () => {
@@ -17,7 +17,3 @@ describe('createOpenAI', () => {
   test('creates websocket client with streaming APIs', async () => { const client = createOpenAI({ apiKey: 'key', transport: 'websocket', reconnect: { maxRetries: 1 }, maxQueueSize: 2 }); const stream = []; for await (const event of client.responses.create({ model: 'test', stream: true })) stream.push(event); expect(stream).toHaveLength(2); await expect(client.responses.create({ model: 'test' })).resolves.toMatchObject({ status: 'completed' }); const listener = () => {}; client.responses.on('error', listener).off('error', listener); await client.responses.close(); });
 });
 
-describe('createAzureOpenAI', () => {
-  test('creates from options and environment', () => { expect(createAzureOpenAI({ apiKey: 'key', endpoint: 'https://azure.test', apiVersion: '2024-10-21', deployment: 'gpt' })).toBeInstanceOf(Object); process.env.AZURE_OPENAI_API_KEY = 'key'; process.env.AZURE_OPENAI_ENDPOINT = 'https://azure.test'; process.env.OPENAI_API_VERSION = '2024-10-21'; expect(createAzureOpenAI()).toBeInstanceOf(Object); });
-  test('validates configuration', () => { expect(() => createAzureOpenAI({ apiKey: 'key', apiVersion: 'v' })).toThrow('endpoint'); expect(() => createAzureOpenAI({ apiKey: 'key', endpoint: 'x' })).toThrow('API version'); expect(() => createAzureOpenAI({ endpoint: 'x', apiVersion: 'v' })).toThrow('API key'); });
-});

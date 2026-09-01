@@ -21,7 +21,6 @@
 - ESM-first and TypeScript-ready
 - Simple API key management (environment or parameter)
 - Full OpenAI SDK option passthrough, including endpoints, timeouts, retries, and custom fetch
-- Azure OpenAI client helper with environment-variable support
 - Selectable HTTP or Responses WebSocket transport
 - Streaming and non-streaming Responses API calls
 - Configurable WebSocket reconnect behavior and queueing
@@ -31,7 +30,6 @@
 
 - Node.js 26 or newer
 - An OpenAI API key for OpenAI usage
-- Azure endpoint, API key, and API version for Azure usage
 
 ## Installation
 
@@ -121,19 +119,11 @@ The WebSocket adapter also supports the familiar `responses.stream()` helper and
 continues to expose HTTP Responses helpers such as `retrieve`, `delete`, `cancel`, and
 `parse`. Call `responses.close()` during shutdown.
 
-### `createAzureOpenAI(options?: AzureOpenAIOptions): OpenAIClient`
-
-Creates an Azure OpenAI client. Options may include `apiKey`, `endpoint`, `apiVersion`, and `deployment`; these default to `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`, and `OPENAI_API_VERSION`.
-
-```js
-const openai = createAzureOpenAI({ deployment: 'gpt-5.6-luna' });
-```
-
 Both helpers throw clear errors when required configuration is missing.
 
 ## Errors / Troubleshooting
 
-`createOpenAI` requires an API key from `apiKey` or `OPENAI_API_KEY`. Azure usage requires the corresponding Azure options or environment variables. Transport, timeout, retry, abort, and WebSocket shutdown errors preserve available upstream context. Always await `responses.close()` for WebSocket clients.
+`createOpenAI` requires an API key from `apiKey` or `OPENAI_API_KEY`. Transport, timeout, retry, abort, and WebSocket shutdown errors preserve available upstream context. Always await `responses.close()` for WebSocket clients.
 
 ## Development
 
@@ -155,9 +145,8 @@ Type definitions are included:
 
 ```ts
 import type OpenAI from 'openai';
-import { createOpenAI, createAzureOpenAI } from '@eliware/openai';
+import { createOpenAI } from '@eliware/openai';
 const openai: import('@eliware/openai').OpenAIClient = createOpenAI();
-const azure: import('@eliware/openai').OpenAIClient = createAzureOpenAI();
 ```
 
 ## Support

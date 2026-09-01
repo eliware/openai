@@ -1,4 +1,4 @@
-import OpenAI, { AzureOpenAI } from 'openai';
+import OpenAI from 'openai';
 import type { ResponsesWSClientOptions } from 'openai/resources/responses/ws';
 import type { Response, ResponseCreateParams, ResponseOutputItem, ResponseStreamEvent } from 'openai/resources/responses/responses';
 
@@ -67,12 +67,6 @@ export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0] & {
   WebSocketImpl?: WebSocketConstructor;
   url?: string;
 };
-export type AzureOpenAIOptions = ConstructorParameters<typeof AzureOpenAI>[0] & {
-  transport?: Transport;
-  maxQueueSize?: ResponsesWSClientOptions['maxQueueSize'];
-  WebSocketImpl?: WebSocketConstructor;
-  url?: string;
-};
 
 export interface ResponsesWebSocketAdapter {
   create(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): Promise<ResponsesResponse> | AsyncIterable<ResponsesEvent>;
@@ -104,7 +98,5 @@ export type OpenAIClient = OpenAI & { responses: (OpenAI['responses'] & HTTPResp
 export declare function createMockResponsesTransport(events?: unknown[], options?: { autoOpen?: boolean; delay?: number; events?: (data: unknown, socket: WebSocketLike) => unknown[] }): WebSocketConstructor;
 
 export declare function createOpenAI(options?: string | OpenAIOptions): OpenAIClient;
-/** Creates an Azure OpenAI client from SDK options or environment variables. */
-export declare function createAzureOpenAI(options?: AzureOpenAIOptions): OpenAIClient;
 
 export declare function normalizeEvent(event: unknown, raw?: unknown): ResponsesEvent | unknown;
