@@ -6,7 +6,7 @@ export class NodeSocketAdapter {
   get readyState() { return this.socket.readyState; }
   send(data) { this.socket.send(data); }
   close(code, reason) { this.socket.close(code, reason); }
-  on(event, listener) { const wrapped = event === 'message' ? (data, binary) => listener(typeof data === 'string' ? data : data.toString(), binary) : event === 'close' ? (code, reason) => listener(code, reason?.toString?.() ?? reason) : listener; this.listeners.set(listener, wrapped); this.socket.on(event, wrapped); }
+  on(event, listener) { const wrapped = event === 'message' ? (data, binary) => listener(typeof data === 'string' ? data : data.toString(), binary) : event === 'close' ? (code, reason) => listener(code, reason?.toString?.() ?? reason) : listener; this.listeners.set(listener, wrapped); this.socket.on(event, wrapped); return this; }
   off(event, listener) { const wrapped = this.listeners.get(listener); if (wrapped) this.socket.removeListener(event, wrapped); this.listeners.delete(listener); }
   once(event, listener) { const once = (...args) => { this.off(event, once); listener(...args); }; this.on(event, once); }
 }

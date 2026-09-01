@@ -34,22 +34,29 @@ export class ResponsesWebSocketAdapter {
     };
     try {
       signal?.addEventListener('abort', onAbort, { once: true });
+      try { await this.ready(); } catch (error) {
+        const responseError = error instanceof ResponsesError ? error : new ResponsesError(error?.message ?? 'Responses WebSocket request failed', { event: { type: 'error' }, cause: error });
+        onError?.(responseError, normalizeEvent(responseError.event));
+        throw responseError;
+      }
       this.socket.send({ type: 'response.create', ...response });
       while (true) {
         let result;
         try { result = await next(); } catch (error) {
           if (aborted || signal?.aborted) { onError?.(error, { type: 'abort' }); throw error; }
-          throw error;
+          const responseError = error instanceof ResponsesError ? error : new ResponsesError(error?.message ?? 'Responses WebSocket request failed', { event: { type: 'error' }, cause: error });
+          onError?.(responseError, normalizeEvent(responseError.event));
+          throw responseError;
         }
         if (result.done) break;
         const event = result.value;
         if (event.type === 'message') {
           const message = normalizeEvent(event.message, event);
           this._handleEvent(message, { onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted });
-          yield message;
-          if (message.type === 'response.completed') { onCompleted?.(message.response, message); return; }
+          if (message.type === 'response.completed') { yield message; onCompleted?.(message.response, message); return; }
           if (message.type === 'response.failed') { const error = new ResponsesError(message.error?.message ?? 'Response failed', { event: message }); onError?.(error, message); throw error; }
           if (message.type === 'response.incomplete') { const error = new ResponsesError(message.incomplete_details?.reason ?? 'Response incomplete', { event: message }); onError?.(error, message); throw error; }
+          yield message;
         } else if (event.type === 'reconnecting' || event.type === 'reconnected' || event.type === 'connecting' || event.type === 'open') {
           continue;
         } else if (event.type === 'error') {
@@ -91,6 +98,7 @@ export class ResponsesWebSocketAdapter {
       await Promise.all([...this._activeStreams].map(stream => stream.return?.()));
       return new Promise((resolve, reject) => {
         const socket = this.socket.socket;
+        if (!socket) { resolve(); return; }
         let settled = false;
         let timer;
         const cleanup = () => { clearTimeout(timer); socket.removeListener?.('close', onClose); socket.removeListener?.('error', onError); };
@@ -105,6 +113,7 @@ export class ResponsesWebSocketAdapter {
         timer = setTimeout(onTimeout, timeout);
         timer.unref?.();
         try {
+          if (typeof this.socket.close !== 'function') { done(); return; }
           this.socket.close(socketProps);
           if (socket.readyState === 3) done();
           else if (!socket.once) done();
