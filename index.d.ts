@@ -45,7 +45,8 @@ export declare class ResponsesError extends Error {
 export declare function eventErrorDetails(event: unknown): { code?: string; type?: string; status?: number; parameter?: string; requestId?: string };
 
 export interface WebSocketConstructor {
-  new (url: string | URL, protocols?: unknown): WebSocketLike;
+  /** Node-style constructor receiving the URL and `{ headers }` options. */
+  new (url: string | URL, options?: { headers?: Record<string, string> }): WebSocketLike;
 }
 export interface WebSocketLike {
   readonly readyState: number;

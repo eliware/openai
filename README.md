@@ -112,7 +112,7 @@ await openai.responses.createWithEvents(request, {
 
 For deterministic tests, `createMockResponsesTransport(events)` returns an injectable WebSocket implementation. It accepts optional `{ autoOpen, delay, events }` options; the event list can include text, function/shell/MCP argument deltas, reasoning summaries, output items, terminal events, and arbitrary socket scenarios. The returned fake exposes `push()`, `error()`, `sent`, and `instances` for deterministic lifecycle tests.
 
-For tests or alternate runtimes, provide `WebSocketImpl` and optionally `url` in the client options. The adapter exposes `await responses.ready()`, `responses.isOpen()`, and `responses.state` (`connecting`, `open`, `closing`, or `closed`). Events include `raw`, `responseId`, and `requestId` when supplied by the server.
+For Node-compatible custom transports, provide `WebSocketImpl` and optionally `url` in the client options. The constructor receives `(url, { headers })`; browser-native WebSocket constructors are not supported directly. The adapter exposes `await responses.ready()`, `responses.isOpen()`, and `responses.state` (`connecting`, `open`, `closing`, or `closed`). Events include `raw`, `responseId`, and `requestId` when supplied by the server.
 
 The WebSocket adapter also supports the familiar `responses.stream()` helper and preserves `inputItems` and `inputTokens` resources. The connection remains available while the client is retained. The WebSocket adapter
 continues to expose HTTP Responses helpers such as `retrieve`, `delete`, `cancel`, and

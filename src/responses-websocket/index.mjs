@@ -1,4 +1,4 @@
-import { ResponsesError, abortError } from '../errors.mjs';
+import { ResponsesError, abortError, responsesWebSocketError } from '../errors.mjs';
 import { normalizeEvent } from '../events.mjs';
 import { InjectableResponsesWS } from './socket.mjs';
 import { dispatch } from '../responses-http/callbacks.mjs';
@@ -53,11 +53,11 @@ export class ResponsesWebSocketAdapter {
           onEvent?.(event, event.raw);
           continue;
         } else if (event.type === 'reconnecting' || event.type === 'reconnected') {
-          const error = new ResponsesError('Responses WebSocket reconnect interrupted the request', { event: normalizeEvent(event, event) }); onError?.(error, error.event); throw error;
+          const error = responsesWebSocketError(normalizeEvent(event, event), 'Responses WebSocket reconnect interrupted the request'); onError?.(error, error.event); throw error;
         } else if (event.type === 'error') {
-          const normalized = normalizeEvent(event, event); const error = new ResponsesError(event.error?.message ?? 'Responses WebSocket error', { event: normalized, cause: event.error }); onError?.(error, normalizeEvent(event, event)); throw error;
+          const normalized = normalizeEvent(event, event); const error = responsesWebSocketError(normalized, 'Responses WebSocket error'); onError?.(error, normalized); throw error;
         } else if (event.type === 'close') {
-          const error = new ResponsesError('Responses WebSocket closed before completion', { event: normalizeEvent(event, event) }); onError?.(error, normalizeEvent(event, event)); throw error;
+          const error = responsesWebSocketError(normalizeEvent(event, event), 'Responses WebSocket closed before completion'); onError?.(error, error.event); throw error;
         }
       }
       const error = new ResponsesError('Responses WebSocket ended before completion', { event: { type: 'end' } }); onError?.(error, normalizeEvent({ type: 'end' })); throw error;
