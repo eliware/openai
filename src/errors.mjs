@@ -2,7 +2,7 @@ import { eventErrorDetails } from './events.mjs';
 
 export class ResponsesError extends Error {
   constructor(message, { event, cause } = {}) {
-    super(message, { cause }); this.name = 'ResponsesError'; this.event = event;
+    super(message, { cause }); this.name = 'ResponsesError'; this.event = event; this.cause = cause;
     Object.assign(this, eventErrorDetails(event));
   }
 }
@@ -10,7 +10,7 @@ export function responsesErrorFrom(error, event = {}) {
   const source = error ?? {};
   const normalized = {
     ...event,
-    error: { ...source.error, message: source.message, code: source.code, type: source.type, status: source.status, param: source.param, request_id: source.requestID ?? source.request_id ?? event.request_id },
+    error: { ...source.error, ...source },
     status: event.status,
     code: event.code,
     type: event.type ?? 'error',
