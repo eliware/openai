@@ -2,7 +2,6 @@ import { createOpenAI } from '@eliware/openai';
 
 const openai = createOpenAI({
   transport: 'websocket',
-  reconnect: { maxRetries: 3 },
 });
 
 try {
