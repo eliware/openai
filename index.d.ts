@@ -9,7 +9,7 @@ export interface ResponsesEventMetadata {
 }
 
 export type ResponsesLifecycleEvent =
-  | { type: 'connecting' | 'open' | 'reconnecting' | 'reconnected' }
+  | { type: 'connecting' | 'open' }
   | { type: 'close'; code?: number; reason?: string; unsent?: unknown }
   | { type: 'error'; error?: unknown };
 

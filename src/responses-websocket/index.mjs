@@ -49,9 +49,11 @@ export class ResponsesWebSocketAdapter {
           if (message.type === 'response.failed') { const error = new ResponsesError(message.error?.message ?? 'Response failed', { event: message }); onError?.(error, message); throw error; }
           if (message.type === 'response.incomplete') { const error = new ResponsesError(message.incomplete_details?.reason ?? 'Response incomplete', { event: message }); onError?.(error, message); throw error; }
           yield message;
-        } else if (event.type === 'reconnecting' || event.type === 'reconnected' || event.type === 'connecting' || event.type === 'open') {
+        } else if (event.type === 'connecting' || event.type === 'open') {
           onEvent?.(event, event.raw);
           continue;
+        } else if (event.type === 'reconnecting' || event.type === 'reconnected') {
+          const error = new ResponsesError('Responses WebSocket reconnect interrupted the request', { event: normalizeEvent(event, event) }); onError?.(error, error.event); throw error;
         } else if (event.type === 'error') {
           const normalized = normalizeEvent(event, event); const error = new ResponsesError(event.error?.message ?? 'Responses WebSocket error', { event: normalized, cause: event.error }); onError?.(error, normalizeEvent(event, event)); throw error;
         } else if (event.type === 'close') {
@@ -71,7 +73,7 @@ export class ResponsesWebSocketAdapter {
         const events = this.socket.stream();
         try {
           for await (const event of events) {
-            if (event.type === 'open' || event.type === 'reconnected' || this.isOpen()) return;
+            if (event.type === 'open' || this.isOpen()) return;
             if (event.type === 'error') throw new ResponsesError(event.error?.message ?? 'Responses WebSocket error', { event, cause: event.error });
             if (event.type === 'close') throw new ResponsesError('Responses WebSocket closed before becoming ready', { event });
           }

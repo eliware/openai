@@ -87,8 +87,6 @@ test('handles abort during an active stream', async () => {
 test('preserves tool, MCP, and reasoning events through reconnect lifecycle', async () => {
   const adapter = make(); const seen = [];
   FakeResponsesWS.events = [
-    { type: 'reconnecting', reconnect: { attempt: 1 } },
-    { type: 'reconnected' },
     { type: 'message', message: { type: 'response.function_call_arguments.delta', delta: '{"x":', response_id: 'resp_1', request_id: 'req_1' } },
     { type: 'message', message: { type: 'response.mcp_call_arguments.delta', delta: '1' } },
     { type: 'message', message: { type: 'response.reasoning_summary_text.delta', delta: 'thinking' } },
@@ -97,9 +95,9 @@ test('preserves tool, MCP, and reasoning events through reconnect lifecycle', as
   const result = await adapter.createWithEvents({}, { onEvent: event => seen.push(event) });
   expect(result.id).toBe('resp_1');
   expect(seen.map(event => event.type)).toEqual([
-    'reconnecting', 'reconnected', 'response.function_call_arguments.delta', 'response.mcp_call_arguments.delta', 'response.reasoning_summary_text.delta', 'response.completed',
+    'response.function_call_arguments.delta', 'response.mcp_call_arguments.delta', 'response.reasoning_summary_text.delta', 'response.completed',
   ]);
-  expect(seen[2]).toMatchObject({ responseId: 'resp_1', requestId: 'req_1', raw: { type: 'message' } });
+  expect(seen[0]).toMatchObject({ responseId: 'resp_1', requestId: 'req_1', raw: { type: 'message' } });
 });
 
 test('preserves structured protocol error metadata', async () => {
