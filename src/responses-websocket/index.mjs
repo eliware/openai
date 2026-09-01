@@ -58,6 +58,7 @@ export class ResponsesWebSocketAdapter {
           if (message.type === 'response.incomplete') { const error = new ResponsesError(message.incomplete_details?.reason ?? 'Response incomplete', { event: message }); onError?.(error, message); throw error; }
           yield message;
         } else if (event.type === 'reconnecting' || event.type === 'reconnected' || event.type === 'connecting' || event.type === 'open') {
+          onEvent?.(event, event.raw);
           continue;
         } else if (event.type === 'error') {
           const normalized = normalizeEvent(event, event); const error = new ResponsesError(event.error?.message ?? 'Responses WebSocket error', { event: normalized, cause: event.error }); onError?.(error, normalizeEvent(event, event)); throw error;

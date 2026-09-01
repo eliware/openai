@@ -2,7 +2,7 @@ import { eventErrorDetails } from './events.mjs';
 
 export class ResponsesError extends Error {
   constructor(message, { event, cause } = {}) {
-    super(message, { cause }); this.name = 'ResponsesError'; this.event = event; this.cause = cause;
+    super(message, { cause }); this.name = 'ResponsesError'; this.event = event;
     Object.assign(this, eventErrorDetails(event));
   }
 }
@@ -19,4 +19,4 @@ export function responsesErrorFrom(error, event = {}) {
   };
   return new ResponsesError(source.message ?? event.message ?? 'Responses request failed', { event: normalized, cause: error });
 }
-export function abortError(signal) { return signal?.reason instanceof Error ? signal.reason : new DOMException('The operation was aborted', 'AbortError'); }
+export function abortError(signal) { if (signal?.reason instanceof Error) return signal.reason; if (typeof DOMException === 'function') return new DOMException('The operation was aborted', 'AbortError'); const error = new Error('The operation was aborted'); error.name = 'AbortError'; return error; }

@@ -12,7 +12,7 @@ export function normalizeEvent(message, raw = message) {
     responseId: event.response_id ?? event.responseId ?? response?.id ?? item?.id,
     requestId: event.request_id ?? event.requestId ?? event._request_id
       ?? nestedError?.request_id ?? nestedError?.requestId,
-    error: event.error,
+    ...(event.error === undefined ? {} : { error: event.error }),
   };
 }
 
