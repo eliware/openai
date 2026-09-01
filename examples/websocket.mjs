@@ -5,7 +5,7 @@ const openai = createOpenAI({
 });
 
 try {
-  const response = await openai.responses.create({ model: 'gpt-5.6-luna', input: 'Say hello.' });
+  const response = await openai.responses.create({ model: process.env.OPENAI_MODEL ?? 'gpt-4.1-mini', input: 'Say hello.' });
   console.log(response.output);
 } finally {
   await openai.responses.close();
