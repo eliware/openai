@@ -412,5 +412,61 @@ test('aborts a request while the socket is not open', async () => {
 
 test('bounds active iterator cleanup during close', async () => {
   const adapter = make(); adapter._activeStreams.add({ return: () => new Promise(() => {}) });
-  await expect(adapter.close({ timeout: 1 })).rejects.toMatchObject({ message: 'Responses WebSocket stream cleanup timed out' });
+  await expect(adapter.close({ timeout: 1 })).resolves.toBeUndefined();
+});
+
+test('waits on underlying socket lifecycle events for readiness', async () => {
+  let instance;
+  class WaitingSocket {
+    constructor() { instance = this; this.readyState = 0; this.handlers = new Map(); }
+    on(event, listener) { this.handlers.set(event, listener); return this; }
+    removeListener(event) { this.handlers.delete(event); }
+    send() {}
+    close() {}
+  }
+  const openAdapter = new ResponsesWebSocketAdapter({}, {}, {}); openAdapter.socket.socket = new WaitingSocket();
+  const opening = openAdapter.ready(); instance.readyState = 1; instance.handlers.get('open')(); await opening;
+  const alreadyOpen = openAdapter.ready(); await alreadyOpen;
+  const errorAdapter = new ResponsesWebSocketAdapter({}, {}, {}); errorAdapter.socket.socket = new WaitingSocket(); instance = errorAdapter.socket.socket;
+  const failed = errorAdapter.ready(); instance.handlers.get('error')(new Error('not ready')); await expect(failed).rejects.toThrow('not ready');
+  const fallbackError = new ResponsesWebSocketAdapter({}, {}, {}); fallbackError.socket.socket = new WaitingSocket(); instance = fallbackError.socket.socket; const fallback = fallbackError.ready(); instance.handlers.get('error')({}); await expect(fallback).rejects.toThrow('Responses WebSocket error');
+  const closeAdapter = new ResponsesWebSocketAdapter({}, {}, {}); closeAdapter.socket.socket = new WaitingSocket(); instance = closeAdapter.socket.socket;
+  const closed = closeAdapter.ready(); instance.handlers.get('close')(1006, 'gone'); await expect(closed).rejects.toThrow('closed before becoming ready');
+  const eventBeforeOpen = new ResponsesWebSocketAdapter({}, {}, {}); eventBeforeOpen.socket.socket = new WaitingSocket(); instance = eventBeforeOpen.socket.socket;
+  const eventReady = eventBeforeOpen.ready(); instance.handlers.get('open')(); await eventReady;
+  const aborted = new ResponsesWebSocketAdapter({}, {}, {}); aborted.socket.socket = new WaitingSocket(); instance = aborted.socket.socket; const controller = new AbortController(); controller.abort(); await expect(aborted.ready(controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+  const closedSocket = new ResponsesWebSocketAdapter({}, {}, {}); closedSocket.socket.socket = new WaitingSocket(); closedSocket.socket.socket.readyState = 1; closedSocket.socket.close = () => { closedSocket.socket.socket.readyState = 3; }; await closedSocket.close();
+});
+
+test('normalizes synchronous send failures', async () => {
+  const adapter = make(); adapter.socket.send = () => { throw new Error('send failed'); };
+  await expect(adapter.create({}, { onError: error => expect(error.message).toBe('send failed') })).rejects.toThrow('send failed');
+});
+
+test('uses fallback normalization for send failures without a message', async () => {
+  const adapter = make(); adapter.socket.send = () => { throw {}; };
+  await expect(adapter.create()).rejects.toThrow('Responses WebSocket send failed');
+});
+
+test('does not leak stream input options into the response payload', async () => {
+  const adapter = make(); FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.completed', response: {} } }];
+  const signal = new AbortController().signal; await adapter.stream({ model: 'test', signal }).next(); expect(adapter.socket.sent[0]).toEqual({ type: 'response.create', model: 'test' });
+});
+
+test('marks sockets closed after synchronous close transition', async () => {
+  const adapter = make(); adapter.socket.socket = { readyState: 1, once: undefined }; adapter.socket.close = () => { adapter.socket.socket.readyState = 3; };
+  await adapter.close(); expect(adapter.state).toBe('closed');
+});
+
+test('uses EventTarget-style shutdown listeners', async () => {
+  const listeners = new Map(); const socket = { readyState: 1, addEventListener(event, listener) { listeners.set(event, listener); }, removeEventListener(event) { listeners.delete(event); } };
+  const adapter = make(); adapter.socket.socket = socket; adapter.socket.close = () => { socket.readyState = 3; listeners.get('close')?.(); };
+  await adapter.close(); expect(adapter.state).toBe('closed');
+});
+
+test('rejects readiness for sockets already closing or closed', async () => {
+  for (const readyState of [2, 3]) {
+    const adapter = make(); adapter.socket.socket = { readyState, on() {}, off() {} };
+    await expect(adapter.ready()).rejects.toThrow('closed before becoming ready');
+  }
 });

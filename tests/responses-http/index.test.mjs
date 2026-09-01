@@ -1,5 +1,6 @@
 import { expect, test } from '@jest/globals';
 import { createHTTPResponsesAdapter } from '../../src/responses-http/index.mjs';
+import { splitOptions } from '../../src/responses-http/callbacks.mjs';
 
 const response = { id: 'resp_1', object: 'response', output: [] };
 
@@ -144,6 +145,11 @@ test('supports AgentX lifecycle callbacks over HTTP', async () => {
     onTextDone: value => calls.push(value), onResponseCompleted: value => calls.push(value),
   });
   expect(calls).toHaveLength(6);
+});
+
+test('accepts null callback options and rejects malformed signals', () => {
+  expect(splitOptions(null).requestOptions).toEqual({});
+  expect(() => splitOptions({ signal: 'invalid' })).toThrow('signal must be an AbortSignal');
 });
 
 test('validates callback types', () => {

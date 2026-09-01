@@ -2,6 +2,7 @@ import { ResponsesWS } from '../transports/responses-websocket.mjs';
 import { WebSocket as NodeWebSocket } from 'ws';
 
 const pendingURLs = new WeakMap();
+const pendingImplementations = new WeakMap();
 
 function prepareClient(client, url) {
   if (!url) return { client, baseURL: undefined };
@@ -24,8 +25,11 @@ export class NodeSocketAdapter {
 }
 
 export class InjectableResponsesWS extends ResponsesWS {
-  constructor(client, options) { const prepared = prepareClient(client, options.url); super(prepared.client, options); pendingURLs.delete(client); this._customWebSocket = options.WebSocketImpl; this._customURL = options.url; }
+  constructor(client, options) { pendingImplementations.set(client, options.WebSocketImpl); const prepared = prepareClient(client, options.url); super(prepared.client, options); pendingURLs.delete(client); pendingImplementations.delete(client); this._customWebSocket = options.WebSocketImpl; this._customURL = options.url; }
   // Intentional 2.0 runtime contract: injected sockets are Node-style and
   // receive `{ headers }`; browser-native constructors are not supported.
-  _createSocket(url, authHeaders) { const customURL = this._customURL ?? pendingURLs.get(this._client); if (!this._customWebSocket && !customURL) return super._createSocket(url, authHeaders); const Impl = this._customWebSocket ?? NodeWebSocket; if (typeof Impl !== 'function') throw new TypeError('WebSocketImpl must be a WebSocket constructor'); return new NodeSocketAdapter(new Impl(customURL ?? url, { headers: authHeaders })); }
+  // Intentional public contract: WebSocketImpl is Node-style and receives
+  // `{ headers }`; browser-native `(url, protocols)` constructors are not
+  // supported because they cannot receive the required authorization header.
+  _createSocket(url, authHeaders) { const customURL = this._customURL ?? pendingURLs.get(this._client); const Impl = this._customWebSocket ?? pendingImplementations.get(this._client) ?? (customURL ? NodeWebSocket : undefined); if (!Impl) return super._createSocket(url, authHeaders); if (typeof Impl !== 'function') throw new TypeError('WebSocketImpl must be a WebSocket constructor'); return new NodeSocketAdapter(new Impl(customURL ?? url, { headers: authHeaders })); }
 }

@@ -34,12 +34,18 @@ export class ResponsesWebSocketAdapter {
     };
     try {
       signal?.addEventListener('abort', onAbort, { once: true });
-      try { await this.ready(); } catch (error) {
+      // The request abort listener is installed before readiness, so aborts
+      // during handshake settle both the readiness wait and request iterator.
+      try { await this.ready(signal); } catch (error) {
         const responseError = error instanceof ResponsesError ? error : new ResponsesError(error?.message ?? 'Responses WebSocket request failed', { event: { type: 'error' }, cause: error });
         onError?.(responseError, normalizeEvent(responseError.event));
         throw responseError;
       }
-      this.socket.send({ type: 'response.create', ...response });
+      if (signal?.aborted) { const error = abort(); onError?.(error, { type: 'abort' }); throw error; }
+      try { this.socket.send({ type: 'response.create', ...response }); } catch (error) {
+        const responseError = new ResponsesError(error?.message ?? 'Responses WebSocket send failed', { event: { type: 'error' }, cause: error });
+        onError?.(responseError, normalizeEvent(responseError.event)); throw responseError;
+      }
       while (true) {
         let result;
         try { result = await next(); } catch (error) {
@@ -52,8 +58,12 @@ export class ResponsesWebSocketAdapter {
         const event = result.value;
         if (event.type === 'message') {
           const message = normalizeEvent(event.message, event);
+          // Intentional: user callback exceptions propagate unchanged so
+          // application bugs are not misreported as transport failures.
           this._handleEvent(message, { onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted });
           if (message.type === 'response.completed') { yield message; return; }
+          // Intentional protocol rule: a close before the completed event is
+          // incomplete, even if the server likely sent completion first.
           if (message.type === 'response.failed') { const error = new ResponsesError(message.error?.message ?? 'Response failed', { event: message }); onError?.(error, message); throw error; }
           if (message.type === 'response.incomplete') { const error = new ResponsesError(message.incomplete_details?.reason ?? 'Response incomplete', { event: message }); onError?.(error, message); throw error; }
           yield message;
@@ -69,24 +79,35 @@ export class ResponsesWebSocketAdapter {
         }
       }
       const error = new ResponsesError('Responses WebSocket ended before completion', { event: { type: 'end' } }); onError?.(error, normalizeEvent({ type: 'end' })); throw error;
-    } finally { signal?.removeEventListener('abort', onAbort); this._activeStreams.delete(events); await events.return?.(); this._requestActive = false; }
+    } finally { signal?.removeEventListener('abort', onAbort); this._activeStreams.delete(events); void events.return?.(); this._requestActive = false; }
   }
 
-  stream(input = {}, options = {}) { return this.create({ ...input, stream: true }, options); }
+  stream(input = {}, options = {}) { const { handlers: inputHandlers, requestOptions: inputOptions } = splitOptions(input); const { signal: inputSignal, ...requestInput } = inputOptions; const { handlers: optionHandlers, requestOptions } = splitOptions(options); return this.create({ ...requestInput, stream: true }, { ...inputHandlers, ...optionHandlers, ...requestOptions, ...(inputSignal === undefined ? {} : { signal: inputSignal }) }); }
   retrieve(...args) { return this.httpResponses.retrieve(...args); } delete(...args) { return this.httpResponses.delete(...args); } cancel(...args) { return this.httpResponses.cancel(...args); } parse(...args) { return this.httpResponses.parse(...args); }
-  async ready() {
+  async ready(signal) {
     if (this.isOpen()) return;
+    // Intentional: readiness is shared per adapter; the first caller's signal
+    // owns cancellation, while request-level abort still races its own read.
     if (!this._readyPromise) {
       this._readyPromise = (async () => {
-        const events = this.socket.stream();
-        try {
-          for await (const event of events) {
-            if (event.type === 'open' || this.isOpen()) return;
-            if (event.type === 'error') throw new ResponsesError(event.error?.message ?? 'Responses WebSocket error', { event, cause: event.error });
-            if (event.type === 'close') throw new ResponsesError('Responses WebSocket closed before becoming ready', { event });
-          }
-          throw new ResponsesError('Responses WebSocket ended before becoming ready');
-        } finally { await events.return?.(); }
+        // Intentional compatibility fallback: only minimal mock sockets without
+        // event listeners use their dedicated readiness iterator.
+        if (typeof this.socket.socket?.on !== 'function') {
+          const events = this.socket.stream();
+          try { for await (const event of events) { if (event.type === 'open' || this.isOpen()) return; if (event.type === 'error') throw new ResponsesError(event.error?.message ?? 'Responses WebSocket error', { event, cause: event.error }); if (event.type === 'close') throw new ResponsesError('Responses WebSocket closed before becoming ready', { event }); } throw new ResponsesError('Responses WebSocket ended before becoming ready'); } finally { await events.return?.(); }
+        }
+        await new Promise((resolve, reject) => {
+          const onAbort = () => { cleanup(); reject(abortError(signal)); };
+          const onOpen = () => { cleanup(); resolve(); };
+          const onError = error => { cleanup(); reject(new ResponsesError(error?.message ?? 'Responses WebSocket error', { event: { type: 'error', error }, cause: error })); };
+          const onClose = (code, reason) => { cleanup(); reject(new ResponsesError('Responses WebSocket closed before becoming ready', { event: { type: 'close', code, reason } })); };
+          const socket = this.socket.socket;
+          const cleanup = () => { signal?.removeEventListener('abort', onAbort); socket.off?.('open', onOpen); socket.off?.('error', onError); socket.off?.('close', onClose); };
+          signal?.addEventListener('abort', onAbort, { once: true });
+          if (signal?.aborted) return onAbort();
+          socket.on?.('open', onOpen); socket.on?.('error', onError); socket.on?.('close', onClose);
+          if (socket.readyState === 2 || socket.readyState === 3) onClose();
+        });
       })().finally(() => { this._readyPromise = null; });
     }
     return this._readyPromise;
@@ -100,15 +121,17 @@ export class ResponsesWebSocketAdapter {
     if (this._closed || this._closePromise) return this._closePromise;
     const { timeout = 30_000, ...socketProps } = props ?? {};
     this._closePromise = (async () => {
-      const cleanup = Promise.all([...this._activeStreams].map(stream => stream.return?.()));
-      let timer;
-      try { await Promise.race([cleanup, new Promise((_, reject) => { timer = setTimeout(() => reject(new ResponsesError('Responses WebSocket stream cleanup timed out', { event: { type: 'close', code: 'timeout' } })), timeout); })]); } finally { clearTimeout(timer); }
+      const deadline = Date.now() + timeout;
+      // Cancellation is best-effort; socket shutdown must not wait on an
+      // iterator whose pending read cannot be woken by return().
+      for (const stream of this._activeStreams) void stream.return?.();
       return new Promise((resolve, reject) => {
         const socket = this.socket.socket;
         if (!socket) { this._closed = true; resolve(); return; }
+        if (socket.readyState === 3) { this._closed = true; resolve(); return; }
         let settled = false;
         let timer;
-        const cleanup = () => { clearTimeout(timer); socket.removeListener?.('close', onClose); socket.removeListener?.('error', onError); };
+        const cleanup = () => { clearTimeout(timer); if (socket.once) { socket.removeListener?.('close', onClose); socket.removeListener?.('error', onError); } else { socket.removeEventListener?.('close', onClose); socket.removeEventListener?.('error', onError); } };
         const done = error => { if (settled) return; settled = true; cleanup(); if (error) reject(error); else { this._closed = true; resolve(); } };
         const onClose = () => done();
         const onError = error => done(error);
@@ -117,14 +140,12 @@ export class ResponsesWebSocketAdapter {
           try { socket.terminate?.(); } catch { /* best effort */ }
           done(new ResponsesError('Responses WebSocket close timed out', { event: { type: 'close', code: 'timeout' } }));
         };
-        if (socket.once) { socket.once('close', onClose); socket.once('error', onError); }
-        timer = setTimeout(onTimeout, timeout);
-        try {
-          if (typeof this.socket.close !== 'function') { done(); return; }
-          this.socket.close(socketProps);
-          if (socket.readyState === 3) { this._closed = true; done(); }
-          else if (!socket.once) done();
-        } catch (error) { done(error); }
+        // Injectable sockets are normalized by NodeSocketAdapter, so these
+        // Node-style listeners cover the supported Node-compatible contract.
+        // Browser-native constructors are intentionally outside that contract.
+        if (socket.once) { socket.once('close', onClose); socket.once('error', onError); } else if (socket.addEventListener) { socket.addEventListener('close', onClose, { once: true }); socket.addEventListener('error', onError, { once: true }); }
+        if (!settled) timer = setTimeout(onTimeout, Math.max(0, deadline - Date.now()));
+        try { if (typeof this.socket.close !== 'function') { done(); return; } this.socket.close(socketProps); if (socket.readyState === 3) { this._closed = true; done(); return; } if (!socket.once && !socket.addEventListener) done(); } catch (error) { done(error); }
       });
     })();
     this._closePromise.catch(() => { this._closePromise = null; });
