@@ -20,6 +20,7 @@
     },
     "scripts": {
         "test": "eliware-test",
+        "test:gaps": "eliware-test --ignore-100x4",
         "lint": "eliware-test --lint",
         "typecheck": "tsc --project tsconfig.json",
         "pack": "npm pack --dry-run"
