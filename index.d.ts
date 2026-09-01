@@ -63,14 +63,12 @@ export type ResponsesRequestOptions = ResponsesEventHandlerOptions & {
 export type Transport = 'http' | 'websocket';
 export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0] & {
   transport?: Transport;
-  reconnect?: ResponsesWSClientOptions['reconnect'];
   maxQueueSize?: ResponsesWSClientOptions['maxQueueSize'];
   WebSocketImpl?: WebSocketConstructor;
   url?: string;
 };
 export type AzureOpenAIOptions = ConstructorParameters<typeof AzureOpenAI>[0] & {
   transport?: Transport;
-  reconnect?: ResponsesWSClientOptions['reconnect'];
   maxQueueSize?: ResponsesWSClientOptions['maxQueueSize'];
   WebSocketImpl?: WebSocketConstructor;
   url?: string;
