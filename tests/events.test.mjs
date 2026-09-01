@@ -1,5 +1,5 @@
 import { expect, test, describe } from '@jest/globals';
-import { normalizeEvent } from './events.mjs';
+import { normalizeEvent } from '../src/events.mjs';
 
 describe('normalizeEvent', () => {
   test('normalizes direct response and request IDs while retaining raw event', () => {

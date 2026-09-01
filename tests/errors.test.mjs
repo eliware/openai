@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { ResponsesError, abortError, responsesErrorFrom } from './errors.mjs';
+import { ResponsesError, abortError, responsesErrorFrom } from '../src/errors.mjs';
 
 describe('errors', () => {
   test('preserves direct response metadata', () => {

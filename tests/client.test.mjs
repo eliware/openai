@@ -8,7 +8,7 @@ class FakeResponsesWS {
   off(event) { this.handlers.delete(event); return this; }
 }
 jest.unstable_mockModule('openai/resources/responses/ws', () => ({ ResponsesWS: FakeResponsesWS }));
-const { createOpenAI, createAzureOpenAI } = await import('./client.mjs');
+const { createOpenAI, createAzureOpenAI } = await import('../src/client.mjs');
 afterEach(() => { delete process.env.OPENAI_API_KEY; delete process.env.AZURE_OPENAI_API_KEY; delete process.env.AZURE_OPENAI_ENDPOINT; delete process.env.OPENAI_API_VERSION; FakeResponsesWS.events = undefined; });
 
 describe('createOpenAI', () => {

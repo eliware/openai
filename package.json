@@ -19,9 +19,8 @@
         }
     },
     "scripts": {
-        "test": "npx --node-options=\"--experimental-vm-modules --no-warnings\" jest --detectOpenHandles --silent --coverage",
-        "test:gaps": "npm test 2>&1 | grep '|' | grep -vF '|     100 |      100 |     100 |     100 |'",
-        "lint": "npx oxlint .",
+        "test": "eliware-test",
+        "lint": "eliware-test --lint",
         "typecheck": "tsc --project tsconfig.json",
         "pack": "npm pack --dry-run"
     },
@@ -46,7 +45,8 @@
     },
     "homepage": "https://github.com/eliware/openai#readme",
     "devDependencies": {
-        "jest": "^30.5.1",
+        "@eliware/test": "^2.2.0",
+        "@eliware/test": "^2.2.0",
         "typescript": "^7.0.2"
     },
     "jest": {

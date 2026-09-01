@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import { createHTTPResponsesAdapter } from './index.mjs';
+import { createHTTPResponsesAdapter } from '../src/responses-http/index.mjs';
 
 const response = { id: 'resp_1', object: 'response', output: [] };
 

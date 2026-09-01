@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import { createMockResponsesTransport } from './mock-transport.mjs';
+import { createMockResponsesTransport } from '../src/mock-transport.mjs';
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0));
 
