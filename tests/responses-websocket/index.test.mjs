@@ -97,9 +97,9 @@ test('preserves tool, MCP, and reasoning events through reconnect lifecycle', as
   const result = await adapter.createWithEvents({}, { onEvent: event => seen.push(event) });
   expect(result.id).toBe('resp_1');
   expect(seen.map(event => event.type)).toEqual([
-    'response.function_call_arguments.delta', 'response.mcp_call_arguments.delta', 'response.reasoning_summary_text.delta', 'response.completed',
+    'reconnecting', 'reconnected', 'response.function_call_arguments.delta', 'response.mcp_call_arguments.delta', 'response.reasoning_summary_text.delta', 'response.completed',
   ]);
-  expect(seen[0]).toMatchObject({ responseId: 'resp_1', requestId: 'req_1', raw: { type: 'message' } });
+  expect(seen[2]).toMatchObject({ responseId: 'resp_1', requestId: 'req_1', raw: { type: 'message' } });
 });
 
 test('preserves structured protocol error metadata', async () => {
