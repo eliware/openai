@@ -145,3 +145,8 @@ test('supports AgentX lifecycle callbacks over HTTP', async () => {
   });
   expect(calls).toHaveLength(6);
 });
+
+test('validates callback types', () => {
+  const adapter = createHTTPResponsesAdapter({ create: async () => ({}) });
+  expect(() => adapter.create({}, { onError: true })).toThrow('onError must be a function');
+});

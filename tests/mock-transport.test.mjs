@@ -68,4 +68,5 @@ test('covers mock defaults and once/off lifecycle', async () => {
   expect(opens).toBe(1); expect(Mock.instances).toContain(socket);
   socket.on('unused', () => {}).off('unused', () => {});
   socket.removeListener('missing', () => {}); socket.emit('missing');
+  socket.close(); expect(socket.push({ type: 'ignored' })).toBe(socket);
 });

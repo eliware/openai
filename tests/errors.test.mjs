@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { ResponsesError, abortError, responsesErrorFrom } from '../src/errors.mjs';
+import { ResponsesError, abortError, responsesErrorFrom, responsesWebSocketError } from '../src/errors.mjs';
 
 describe('errors', () => {
   test('preserves direct response metadata', () => {
@@ -28,5 +28,10 @@ describe('errors', () => {
     const reason = new Error('cancelled'); controller.abort(reason);
     expect(abortError({ reason })).toBe(reason);
     expect(abortError().name).toBe('AbortError');
+  });
+  test('normalizes websocket errors and preserves explicit causes', () => {
+    const cause = new Error('cause'); const error = responsesWebSocketError({ error: { message: 'socket', code: 'down' } }, 'fallback', cause);
+    expect(error).toMatchObject({ message: 'socket', cause, event: { type: 'error' } });
+    expect(responsesWebSocketError({ type: 'error', error: { message: 'typed' } }, 'fallback').message).toBe('typed');
   });
 });
