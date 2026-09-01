@@ -301,3 +301,11 @@ test('accepts null close options', async () => {
   adapter.socket.socket = { readyState: 1 };
   await adapter.close(null);
 });
+
+test('rejects concurrent requests explicitly', async () => {
+  const adapter = make(); let resolveNext;
+  adapter.socket.stream = () => ({ [Symbol.asyncIterator]() { return this; }, next: () => new Promise(resolve => { resolveNext = resolve; }), return: async () => { resolveNext?.({ done: true }); return { done: true }; } });
+  const first = adapter.create({}); await Promise.resolve();
+  await expect(adapter.create({})).rejects.toThrow('Concurrent Responses WebSocket requests');
+  await adapter.close(); await expect(first).rejects.toBeTruthy();
+});

@@ -1,23 +1,13 @@
 import { ResponsesError, abortError } from '../errors.mjs';
 import { normalizeEvent } from '../events.mjs';
 import { InjectableResponsesWS } from './socket.mjs';
+import { dispatch } from '../responses-http/callbacks.mjs';
 export class ResponsesWebSocketAdapter {
   constructor(client, options = {}, httpResponses = client.responses) { this.socket = new InjectableResponsesWS(client, options); this.httpResponses = httpResponses; this.inputItems = httpResponses?.inputItems; this.inputTokens = httpResponses?.inputTokens; this._readyPromise = null; this._closed = false; this._activeStreams = new Set(); this._requestActive = false; }
   create(input = {}, options = {}) { if (this._closed) return Promise.reject(new ResponsesError('Responses WebSocket is closed')); const { stream = false, ...response } = input; const iterator = this.events(response, options); if (stream) return iterator; return (async () => { let completed; for await (const event of iterator) if (event.type === 'response.completed') completed = event.response; return completed; })(); }
   createWithEvents(input = {}, handlers = {}) { if (input.stream) return (async () => { for await (const event of this.create(input, handlers)) void event; })(); return this.create(input, handlers); }
   events(response = {}, options = {}) { return this._request(response, options); }
-  _handleEvent(event, handlers = {}) {
-    handlers.onEvent?.(event, event.raw);
-    if (event.type === 'response.created') handlers.onResponseCreated?.(event.response, event);
-    if (event.type === 'response.in_progress') handlers.onResponseProgress?.(event.response, event);
-    if (event.type === 'response.content_part.added') handlers.onContentPartAdded?.(event.part, event);
-    if (event.type === 'response.content_part.done') handlers.onContentPartDone?.(event.part, event);
-    if (event.type === 'response.output_text.delta') handlers.onTextDelta?.(event.delta, event);
-    if (event.type === 'response.output_text.done') handlers.onTextDone?.(event.text, event);
-    if (event.type === 'response.output_item.added') handlers.onItemAdded?.(event.item, event);
-    if (event.type === 'response.output_item.done') handlers.onItemDone?.(event.item, event);
-    if (event.type === 'response.completed') { handlers.onCompleted?.(event.response, event); handlers.onResponseCompleted?.(event.response, event); }
-  }
+  _handleEvent(event, handlers = {}) { return dispatch(event, handlers); }
   async *_request(response, { signal, onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted, onError } = {}) {
     const abort = () => abortError(signal);
     if (signal?.aborted) { const error = abort(); onError?.(error, { type: 'abort' }); throw error; }
