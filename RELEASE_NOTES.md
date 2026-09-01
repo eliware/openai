@@ -55,3 +55,7 @@
 ## 1.1.1
 
 - Version 1.1.1 release, December 9, 2025.
+## 2.0.0 — Unreleased
+
+- Removed the legacy `responses-ws` transport alias.
+- WebSocket clients now reject concurrent response requests explicitly.

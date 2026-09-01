@@ -60,7 +60,7 @@ export type ResponsesRequestOptions = ResponsesEventHandlerOptions & {
   timeout?: number;
 };
 
-export type Transport = 'http' | 'websocket' | 'responses-ws';
+export type Transport = 'http' | 'websocket';
 export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0] & {
   transport?: Transport;
   reconnect?: ResponsesWSClientOptions['reconnect'];

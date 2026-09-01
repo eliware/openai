@@ -82,6 +82,9 @@ for await (const event of events) console.log(event);
 await openai.responses.close();
 ```
 
+Version 2 supports one in-flight WebSocket response request per client.
+Concurrent requests reject explicitly to prevent response-event cross-talk.
+
 The WebSocket adapter also exposes a transport-neutral event iterator. Use `events()` when you need protocol events without collecting a final response:
 
 ```js
