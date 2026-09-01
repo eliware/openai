@@ -93,17 +93,16 @@ export class ResponsesWebSocketAdapter {
   get state() { return ['connecting', 'open', 'closing', 'closed'][this.socket.socket?.readyState ?? 3]; }
   close(props = {}) {
     if (this._closed) return this._closePromise;
-    this._closed = true;
     const { timeout = 30_000, ...socketProps } = props ?? {};
     this._closePromise = (async () => {
       await Promise.all([...this._activeStreams].map(stream => stream.return?.()));
       return new Promise((resolve, reject) => {
         const socket = this.socket.socket;
-        if (!socket) { resolve(); return; }
+        if (!socket) { this._closed = true; resolve(); return; }
         let settled = false;
         let timer;
         const cleanup = () => { clearTimeout(timer); socket.removeListener?.('close', onClose); socket.removeListener?.('error', onError); };
-        const done = error => { if (settled) return; settled = true; cleanup(); if (error) reject(error); else resolve(); };
+        const done = error => { if (settled) return; settled = true; cleanup(); if (error) reject(error); else { this._closed = true; resolve(); } };
         const onClose = () => done();
         const onError = error => done(error);
         const onTimeout = () => {

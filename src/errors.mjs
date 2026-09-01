@@ -10,7 +10,7 @@ export function responsesErrorFrom(error, event = {}) {
   const source = error ?? {};
   const normalized = {
     ...event,
-    error: { ...source.error, ...source },
+    error: { ...source.error, message: source.message, code: source.code, type: source.type, status: source.status, param: source.param, request_id: source.requestID ?? source.request_id ?? event.request_id },
     status: event.status,
     code: event.code,
     type: event.type ?? 'error',
