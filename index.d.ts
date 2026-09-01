@@ -1,5 +1,4 @@
 import OpenAI from 'openai';
-import type { ResponsesWSClientOptions } from 'openai/resources/responses/ws';
 import type { Response, ResponseCreateParams, ResponseOutputItem, ResponseStreamEvent } from 'openai/resources/responses/responses';
 
 export interface ResponsesEventMetadata {
@@ -64,7 +63,7 @@ export type ResponsesRequestOptions = ResponsesEventHandlerOptions & {
 export type Transport = 'http' | 'websocket';
 export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0] & {
   transport?: Transport;
-  maxQueueSize?: ResponsesWSClientOptions['maxQueueSize'];
+  maxQueueSize?: number;
   WebSocketImpl?: WebSocketConstructor;
   url?: string;
 };

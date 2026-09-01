@@ -69,4 +69,21 @@ test('covers mock defaults and once/off lifecycle', async () => {
   socket.on('unused', () => {}).off('unused', () => {});
   socket.removeListener('missing', () => {}); socket.emit('missing');
   socket.close(); expect(socket.push({ type: 'ignored' })).toBe(socket);
+  expect(() => socket.send('{}')).not.toThrow();
+  socket.close();
+});
+
+test('cancels delayed queued messages during close', async () => {
+  const Mock = createMockResponsesTransport([{ type: 'late' }], { delay: 100 });
+  const socket = new Mock(); socket.on('message', () => { throw new Error('late message'); });
+  socket.send('{}'); socket.close();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(socket.closed).toEqual({ code: 1000, reason: 'OK' });
+});
+
+test('drops a queued message when the socket closes before delivery', async () => {
+  const Mock = createMockResponsesTransport([{ type: 'dropped' }]); const socket = new Mock();
+  const seen = []; socket.on('message', value => seen.push(value)); socket.send('{}'); socket.readyState = 3;
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(seen).toEqual([]);
 });

@@ -29,6 +29,13 @@ describe('errors', () => {
     expect(abortError({ reason })).toBe(reason);
     expect(abortError().name).toBe('AbortError');
   });
+  test('creates AbortError without DOMException and normalizes websocket event forms', () => {
+    const original = globalThis.DOMException;
+    globalThis.DOMException = undefined;
+    try { expect(abortError().name).toBe('AbortError'); } finally { globalThis.DOMException = original; }
+    expect(responsesWebSocketError({ type: 'close', code: 1006 }, 'closed').message).toBe('closed');
+    expect(responsesWebSocketError(undefined, 'fallback').message).toBe('fallback');
+  });
   test('normalizes websocket errors and preserves explicit causes', () => {
     const cause = new Error('cause'); const error = responsesWebSocketError({ error: { message: 'socket', code: 'down' } }, 'fallback', cause);
     expect(error).toMatchObject({ message: 'socket', cause, event: { type: 'error' } });

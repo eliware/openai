@@ -84,9 +84,12 @@ export class ResponsesWebSocketAdapter {
     return this._readyPromise;
   }
   isOpen() { return this.socket.socket?.readyState === 1; }
-  get state() { return ['connecting', 'open', 'closing', 'closed'][this.socket.socket?.readyState ?? 3]; }
+  get state() {
+    if (this._closePromise && !this._closed) return 'closing';
+    return ['connecting', 'open', 'closing', 'closed'][this.socket.socket?.readyState ?? 3];
+  }
   close(props = {}) {
-    if (this._closed) return this._closePromise;
+    if (this._closed || this._closePromise) return this._closePromise;
     const { timeout = 30_000, ...socketProps } = props ?? {};
     this._closePromise = (async () => {
       await Promise.all([...this._activeStreams].map(stream => stream.return?.()));
@@ -105,7 +108,6 @@ export class ResponsesWebSocketAdapter {
         };
         if (socket.once) { socket.once('close', onClose); socket.once('error', onError); }
         timer = setTimeout(onTimeout, timeout);
-        timer.unref?.();
         try {
           if (typeof this.socket.close !== 'function') { done(); return; }
           this.socket.close(socketProps);
@@ -114,6 +116,7 @@ export class ResponsesWebSocketAdapter {
         } catch (error) { done(error); }
       });
     })();
+    this._closePromise.catch(() => { this._closePromise = null; });
     return this._closePromise;
   }
 

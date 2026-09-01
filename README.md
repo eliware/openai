@@ -195,8 +195,9 @@ exhaustion.
 
 ### Event and error contract
 
-WebSocket lifecycle events (`connecting`, `open`, `reconnecting`, `reconnected`,
-`close`, and `error`) are transport events. Response protocol events are yielded
+WebSocket lifecycle events (`connecting`, `open`, `close`, and `error`) are transport events.
+Reconnect is not performed by the 2.0 adapter; an interruption fails the active request.
+Response protocol events are yielded
 with their original `type`, plus `raw`, `responseId`, and `requestId` when available.
 `ResponsesError` preserves the originating event and exposes `code`, `type`, `status`,
 `parameter`, `requestId`, and `cause` where available. Always await `responses.close()`

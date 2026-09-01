@@ -1,4 +1,5 @@
 import { jest, expect, test, describe } from '@jest/globals';
+import { ResponsesError } from '../../src/errors.mjs';
 class FakeResponsesWS { _createSocket() { return { readyState: 1 }; } constructor() { this.handlers = new Map(); this.sent = []; this.socket = { readyState: 1 }; } send(event) { this.sent.push(event); } async *stream() { for (const event of FakeResponsesWS.events ?? [{ type: 'message', message: { type: 'response.output_text.delta', delta: 'hi' } }, { type: 'message', message: { type: 'response.completed', response: { status: 'completed' } } }]) yield event; FakeResponsesWS.events = undefined; } close(props) { this.closed = props ?? true; } on(event, listener) { this.handlers.set(event, listener); return this; } off(event) { this.handlers.delete(event); return this; } }
 jest.unstable_mockModule('openai/resources/responses/ws', () => ({ ResponsesWS: FakeResponsesWS }));
 jest.unstable_mockModule('ws', () => ({ WebSocket: class DefaultSocket { constructor() { this.readyState = 1; } on() {} removeListener() {} send() {} close() {} } }));
@@ -6,6 +7,7 @@ const { ResponsesWebSocketAdapter } = await import('../../src/responses-websocke
 const make = (http = {}) => new ResponsesWebSocketAdapter({}, {}, http);
 
 describe('ResponsesWebSocketAdapter', () => {
+  test('exposes the SDK transport only through the internal boundary', async () => { const { ResponsesWS: BoundaryResponsesWS } = await import('../../src/transports/responses-websocket.mjs'); expect(BoundaryResponsesWS).toBe(FakeResponsesWS); });
   test('creates and streams responses', async () => { const adapter = make(); expect(adapter.socket).toBeInstanceOf(FakeResponsesWS); expect((await adapter.create()).status).toBe('completed'); const events = []; for await (const event of adapter.stream({ model: 'test' })) events.push(event); expect(events).toHaveLength(2); });
   test('exposes events, metadata, callbacks, and errors', async () => { const adapter = make(); const calls = []; const response = await adapter.createWithEvents({}, { onEvent: event => calls.push(event.type), onTextDelta: delta => calls.push(delta), onCompleted: result => calls.push(result.status) }); expect(response.status).toBe('completed'); expect(calls).toEqual(['response.output_text.delta', 'hi', 'response.completed', 'completed']); FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.failed', error: { code: 'bad', message: 'failed' } } }]; await expect((async () => { for await (const event of adapter.events({})) void event; })()).rejects.toMatchObject({ name: 'ResponsesError', code: 'bad', message: 'failed' }); });
   test('supports abort, lifecycle, and socket errors', async () => { const adapter = make(); const controller = new AbortController(); controller.abort(); await expect(adapter.create({}, { signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' }); expect(adapter.isOpen()).toBe(true); expect(adapter.state).toBe('open'); await adapter.ready(); FakeResponsesWS.events = [{ type: 'error', error: new Error('socket') }]; await expect(adapter.create({})).rejects.toThrow('socket'); });
@@ -307,10 +309,103 @@ test('accepts null close options', async () => {
   await adapter.close(null);
 });
 
+test('reports closing state and coalesces shutdown', async () => {
+  const adapter = make(); let finish;
+  adapter.socket.socket = { readyState: 1, once(event, listener) { if (event === 'close') finish = listener; }, removeListener() {}, close() {} };
+  const first = adapter.close();
+  expect(adapter.state).toBe('closing');
+  expect(adapter.close()).toBe(first);
+  await Promise.resolve();
+  adapter.socket.socket.readyState = 3;
+  finish();
+  await first;
+  expect(adapter.state).toBe('closed');
+});
+
+test('allows retry after a failed shutdown', async () => {
+  const adapter = make(); let attempts = 0;
+  adapter.socket.close = () => { attempts += 1; if (attempts === 1) throw new Error('first close failed'); };
+  await expect(adapter.close()).rejects.toThrow('first close failed');
+  await expect(adapter.close()).resolves.toBeUndefined();
+  expect(attempts).toBe(2);
+});
+
 test('rejects concurrent requests explicitly', async () => {
   const adapter = make(); let resolveNext;
   adapter.socket.stream = () => ({ [Symbol.asyncIterator]() { return this; }, next: () => new Promise(resolve => { resolveNext = resolve; }), return: async () => { resolveNext?.({ done: true }); return { done: true }; } });
   const first = adapter.create({}); await Promise.resolve();
   await expect(adapter.create({})).rejects.toThrow('Concurrent Responses WebSocket requests');
   await adapter.close(); await expect(first).rejects.toBeTruthy();
+});
+
+test('covers streaming event facade and lifecycle notifications', async () => {
+  const adapter = make(); const seen = [];
+  FakeResponsesWS.events = [{ type: 'connecting' }, { type: 'open' }, { type: 'message', message: { type: 'response.completed', response: {} } }];
+  await adapter.createWithEvents({ stream: true }, { onEvent: event => seen.push(event.type) });
+  expect(seen).toEqual(['connecting', 'open', 'response.completed']);
+});
+
+test('fails active requests on reconnect events and wraps readiness failures', async () => {
+  const adapter = make();
+  FakeResponsesWS.events = [{ type: 'reconnecting' }];
+  await expect(adapter.create({})).rejects.toThrow('reconnect interrupted');
+  const ready = make(); ready.ready = async () => { throw {}; };
+  await expect(ready.create({})).rejects.toThrow('Responses WebSocket request failed');
+  const iterator = make(); iterator.socket.stream = () => ({
+    [Symbol.asyncIterator]() { return this; },
+    next: async () => { throw {}; },
+    return: async () => ({ done: true }),
+  });
+  await expect(iterator.create({}, { onError: () => {} })).rejects.toThrow('Responses WebSocket request failed');
+});
+
+test('uses abort race listeners for a signal that completes normally', async () => {
+  const adapter = make(); const controller = new AbortController();
+  FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.completed', response: {} } }];
+  await expect(adapter.create({}, { signal: controller.signal })).resolves.toEqual({});
+});
+
+test('rejects the abort race while the iterator is pending', async () => {
+  const adapter = make(); const controller = new AbortController();
+  adapter.socket.stream = () => ({
+    [Symbol.asyncIterator]() { return this; },
+    next: () => new Promise(() => {}),
+    return: async () => ({ done: true }),
+  });
+  const pending = adapter.create({}, { signal: controller.signal });
+  await Promise.resolve();
+  controller.abort();
+  await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+});
+
+test('preserves plain iterator error messages', async () => {
+  const adapter = make();
+  adapter.socket.stream = () => ({
+    [Symbol.asyncIterator]() { return this; },
+    next: async () => { throw new Error('iterator detail'); },
+    return: async () => ({ done: true }),
+  });
+  await expect(adapter.create({})).rejects.toThrow('iterator detail');
+});
+
+test('passes through normalized iterator errors', async () => {
+  const adapter = make();
+  adapter.socket.stream = () => ({
+    [Symbol.asyncIterator]() { return this; },
+    next: async () => { throw new ResponsesError('normalized'); },
+    return: async () => ({ done: true }),
+  });
+  await expect(adapter.create({})).rejects.toThrow('normalized');
+});
+
+test('aborts a request while the socket is not open', async () => {
+  const adapter = make(); const controller = new AbortController(); adapter.socket.socket.readyState = 0; adapter.ready = async () => {};
+  adapter.socket.stream = () => ({
+    [Symbol.asyncIterator]() { return this; },
+    next: () => new Promise(() => {}),
+    return: async () => ({ done: true }),
+  });
+  const pending = adapter.create({}, { signal: controller.signal });
+  await Promise.resolve(); controller.abort();
+  await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
 });
