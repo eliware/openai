@@ -128,6 +128,13 @@ test('aborting an active websocket request closes its iterator', async () => {
   expect(returned).toBe(true);
 });
 
+test('sends response.cancel when an active request is aborted', async () => {
+  const adapter = make(); const controller = new AbortController();
+  FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.output_text.delta', delta: 'x' } }, { type: 'message', message: { type: 'response.completed', response: {} } }];
+  await expect(adapter.create({}, { signal: controller.signal, onEvent: event => { if (event.type === 'response.output_text.delta') controller.abort(); } })).rejects.toMatchObject({ name: 'AbortError' });
+  expect(adapter.socket.sent).toContainEqual({ type: 'response.cancel' });
+});
+
 test('close waits for active streams and prevents new requests', async () => {
   const adapter = make(); let returned = false;
   adapter.socket.stream = () => {
