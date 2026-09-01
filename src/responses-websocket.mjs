@@ -1,4 +1,5 @@
 import { ResponsesWS } from 'openai/resources/responses/ws';
+import { WebSocket as NodeWebSocket } from 'ws';
 import { ResponsesError, abortError } from './errors.mjs';
 import { normalizeEvent } from './events.mjs';
 
@@ -13,7 +14,7 @@ class NodeSocketAdapter {
 }
 class InjectableResponsesWS extends ResponsesWS {
   constructor(client, options) { super(client, options); this._customWebSocket = options.WebSocketImpl; this._customURL = options.url; }
-  _createSocket(url, authHeaders) { if (!this._customWebSocket && !this._customURL) return super._createSocket(url, authHeaders); const Impl = this._customWebSocket; if (typeof Impl !== 'function') throw new TypeError('WebSocketImpl must be a WebSocket constructor'); return new NodeSocketAdapter(new Impl(this._customURL ?? url, { headers: authHeaders })); }
+  _createSocket(url, authHeaders) { if (!this._customWebSocket && !this._customURL) return super._createSocket(url, authHeaders); const Impl = this._customWebSocket ?? NodeWebSocket; if (typeof Impl !== 'function') throw new TypeError('WebSocketImpl must be a WebSocket constructor'); return new NodeSocketAdapter(new Impl(this._customURL ?? url, { headers: authHeaders })); }
 }
 export class ResponsesWebSocketAdapter {
   constructor(client, options = {}, httpResponses = client.responses) { this.socket = new InjectableResponsesWS(client, options); this.httpResponses = httpResponses; this.inputItems = httpResponses?.inputItems; this.inputTokens = httpResponses?.inputTokens; this._readyPromise = null; this._closed = false; this._activeStreams = new Set(); }

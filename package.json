@@ -46,7 +46,7 @@
     },
     "homepage": "https://github.com/eliware/openai#readme",
     "devDependencies": {
-        "jest": "^30.4.2",
+        "jest": "^30.5.1",
         "typescript": "^7.0.2"
     },
     "jest": {
@@ -58,7 +58,7 @@
         ]
     },
     "dependencies": {
-        "openai": "^7.4.0",
+        "openai": "^7.8.0",
         "ws": "^8.21.3"
     }
 }
