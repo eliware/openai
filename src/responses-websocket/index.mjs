@@ -16,7 +16,7 @@ export class ResponsesWebSocketAdapter {
     const events = this.socket.stream();
     this._activeStreams.add(events);
     let aborted = false;
-    const onAbort = () => { aborted = true; };
+    const onAbort = () => { aborted = true; try { if (this.isOpen()) this.socket.send({ type: 'response.cancel' }); } finally { void events.return?.(); } };
     const next = () => {
       if (!signal) return events.next();
       if (signal.aborted) return Promise.reject(abort());
