@@ -25,5 +25,7 @@ export class NodeSocketAdapter {
 
 export class InjectableResponsesWS extends ResponsesWS {
   constructor(client, options) { const prepared = prepareClient(client, options.url); super(prepared.client, options); pendingURLs.delete(client); this._customWebSocket = options.WebSocketImpl; this._customURL = options.url; }
+  // Intentional 2.0 runtime contract: injected sockets are Node-style and
+  // receive `{ headers }`; browser-native constructors are not supported.
   _createSocket(url, authHeaders) { const customURL = this._customURL ?? pendingURLs.get(this._client); if (!this._customWebSocket && !customURL) return super._createSocket(url, authHeaders); const Impl = this._customWebSocket ?? NodeWebSocket; if (typeof Impl !== 'function') throw new TypeError('WebSocketImpl must be a WebSocket constructor'); return new NodeSocketAdapter(new Impl(customURL ?? url, { headers: authHeaders })); }
 }

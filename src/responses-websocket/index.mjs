@@ -102,8 +102,7 @@ export class ResponsesWebSocketAdapter {
     this._closePromise = (async () => {
       const cleanup = Promise.all([...this._activeStreams].map(stream => stream.return?.()));
       let timer;
-      await Promise.race([cleanup, new Promise((_, reject) => { timer = setTimeout(() => reject(new ResponsesError('Responses WebSocket stream cleanup timed out', { event: { type: 'close', code: 'timeout' } })), timeout); })]);
-      clearTimeout(timer);
+      try { await Promise.race([cleanup, new Promise((_, reject) => { timer = setTimeout(() => reject(new ResponsesError('Responses WebSocket stream cleanup timed out', { event: { type: 'close', code: 'timeout' } })), timeout); })]); } finally { clearTimeout(timer); }
       return new Promise((resolve, reject) => {
         const socket = this.socket.socket;
         if (!socket) { this._closed = true; resolve(); return; }

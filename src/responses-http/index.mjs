@@ -12,10 +12,12 @@ export function createHTTPResponsesAdapter(responses) {
     const streaming = requestInput.stream ?? requestOptions.stream;
     delete requestInput.stream;
     delete requestOptions.stream;
-    const result = responses.create({ ...requestInput, stream: streaming }, requestOptions);
+    const request = { ...requestInput };
+    if (streaming !== undefined) request.stream = streaming;
+    const result = responses.create(request, requestOptions);
     if (!streaming) {
       return Promise.resolve(result).then(response => {
-        const event = normalizeEvent({ type: 'response.completed', response });
+        const event = normalizeEvent({ type: 'response.completed', response, response_id: response?.id, request_id: response?.request_id });
         dispatch(event, handlers);
         return response;
       }, error => {
