@@ -17,6 +17,10 @@ export class NodeSocketAdapter {
   on(event, listener) { const wrapped = event === 'message' ? (data, binary) => listener(typeof data === 'string' ? data : data.toString(), binary) : event === 'close' ? (code, reason) => listener(code, reason?.toString?.() ?? reason) : listener; const listeners = this.listeners.get(event) ?? new Map(); listeners.set(listener, wrapped); this.listeners.set(event, listeners); this.socket.on(event, wrapped); return this; }
   off(event, listener) { const wrapped = this.listeners.get(event)?.get(listener); if (wrapped) this.socket.removeListener(event, wrapped); this.listeners.get(event)?.delete(listener); return this; }
   once(event, listener) { const once = (...args) => { this.off(event, once); listener(...args); }; this.on(event, once); return this; }
+  removeAllListeners(event) { if (event === undefined) for (const name of this.listeners.keys()) this.removeAllListeners(name); else { for (const wrapped of this.listeners.get(event)?.values() ?? []) this.socket.removeListener(event, wrapped); this.listeners.delete(event); } return this; }
+  terminate() { return this.socket.terminate?.(); }
+  addEventListener(event, listener) { return this.on(event, listener); }
+  removeEventListener(event, listener) { return this.off(event, listener); }
 }
 
 export class InjectableResponsesWS extends ResponsesWS {

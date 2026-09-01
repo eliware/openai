@@ -33,7 +33,7 @@ test('covers ready states and event error paths', async () => {
 });
 
 test('supports injected WebSocket construction and adapter listeners', async () => {
-  class CustomSocket { constructor() { this.readyState = 1; this.handlers = {}; } on(event, listener) { this.handlers[event] = listener; } removeListener(event) { delete this.handlers[event]; } send() {} close() {} }
+  class CustomSocket { constructor() { this.readyState = 1; this.handlers = {}; } on(event, listener) { this.handlers[event] = listener; } removeListener(event) { delete this.handlers[event]; } send() {} close() {} terminate() { return 'terminated'; } }
   const adapter = new ResponsesWebSocketAdapter({}, { WebSocketImpl: CustomSocket, url: 'ws://custom' }, {});
   const socket = adapter.socket._createSocket('ws://default', { Authorization: 'x' }); expect(socket.readyState).toBe(1);
   socket.send('x'); socket.close(1000, 'ok');
@@ -49,13 +49,13 @@ test('uses the default WebSocket implementation when only url is supplied', asyn
 
 
 test('covers transport adapter edge paths', () => {
-  class CustomSocket { constructor() { this.readyState = 1; this.handlers = {}; } on(event, listener) { this.handlers[event] = listener; } removeListener(event) { delete this.handlers[event]; } send() {} close() {} }
+  class CustomSocket { constructor() { this.readyState = 1; this.handlers = {}; } on(event, listener) { this.handlers[event] = listener; } removeListener(event) { delete this.handlers[event]; } send() {} close() {} terminate() { return 'terminated'; } }
   const adapter = new ResponsesWebSocketAdapter({}, { WebSocketImpl: CustomSocket }, {});
   const socket = adapter.socket._createSocket('ws://default', {});
   const values = []; const listener = (value) => values.push(value);
   socket.on('message', listener); socket.socket.handlers.message(Buffer.from('buffer'), true); socket.off('message', listener); socket.off('missing', listener);
-  const closeListener = (...args) => values.push(args); socket.on('close', closeListener); socket.socket.handlers.close(1000); socket.off('close', closeListener); socket.send('x'); socket.close();
-  expect(values[0]).toBe('buffer'); expect(values[1]).toEqual([1000, undefined]);
+  const open = () => {}; const closeListener = (...args) => values.push(args); socket.on('close', closeListener); socket.socket.handlers.close(1000); socket.off('close', closeListener); socket.send('x'); socket.close();
+  expect(values[0]).toBe('buffer'); expect(values[1]).toEqual([1000, undefined]); expect(socket.removeAllListeners('missing')).toBe(socket); expect(socket.addEventListener('open', open)).toBe(socket); expect(socket.removeAllListeners('open')).toBe(socket); expect(socket.addEventListener('open', open)).toBe(socket); expect(socket.removeAllListeners()).toBe(socket); expect(socket.removeEventListener('open', open)).toBe(socket); expect(socket.terminate()).toBe('terminated');
   expect(() => new ResponsesWebSocketAdapter({}, { WebSocketImpl: 1 }, {}).socket._createSocket('url', {})).toThrow('constructor');
   expect(adapter.socket._createSocket('url', {}).readyState).toBe(1);
 });
@@ -315,7 +315,7 @@ test('reports closing state and coalesces shutdown', async () => {
   const first = adapter.close();
   expect(adapter.state).toBe('closing');
   expect(adapter.close()).toBe(first);
-  await Promise.resolve();
+  await Promise.resolve(); await Promise.resolve();
   adapter.socket.socket.readyState = 3;
   finish();
   await first;
@@ -408,4 +408,9 @@ test('aborts a request while the socket is not open', async () => {
   const pending = adapter.create({}, { signal: controller.signal });
   await Promise.resolve(); controller.abort();
   await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+});
+
+test('bounds active iterator cleanup during close', async () => {
+  const adapter = make(); adapter._activeStreams.add({ return: () => new Promise(() => {}) });
+  await expect(adapter.close({ timeout: 1 })).rejects.toMatchObject({ message: 'Responses WebSocket stream cleanup timed out' });
 });

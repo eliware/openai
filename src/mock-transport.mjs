@@ -5,7 +5,7 @@ export function createMockResponsesTransport(events = [], options = {}) {
     static instances = [];
     constructor(url = '', protocols) {
       this.url = url; this.protocols = protocols; this.readyState = defaults.autoOpen ? 1 : 0;
-      this.listeners = new Map(); this.sent = []; this.closed = false; this._timers = new Set(); this._events = [...events];
+      this.listeners = new Map(); this.sent = []; this.closed = false; this._timers = new Set(); this._events = [...(Array.isArray(defaults.events) ? defaults.events : events)];
       MockResponsesWebSocket.instances.push(this);
       if (defaults.autoOpen) queueMicrotask(() => this.emit('open'));
     }
@@ -15,7 +15,9 @@ export function createMockResponsesTransport(events = [], options = {}) {
     removeListener(event, listener) { this.listeners.set(event, (this.listeners.get(event) ?? []).filter(item => item !== listener)); return this; }
     emit(event, ...args) { for (const listener of (this.listeners.get(event) ?? [])) listener(...args); return this; }
     send(data) {
-      this.sent.push(typeof data === 'string' ? JSON.parse(data) : data);
+      let payload = data;
+      if (typeof data === 'string') { try { payload = JSON.parse(data); } catch { /* raw text is valid WebSocket data */ } }
+      this.sent.push(payload);
       const batch = typeof defaults.events === 'function' ? defaults.events(data, this) : this._events;
       if (!Array.isArray(batch)) throw new TypeError('Mock transport event factory must return an array');
       for (const event of batch) { const timer = setTimeout(() => { this._timers.delete(timer); if (this.readyState !== 3) this.emit('message', JSON.stringify(event), false); }, defaults.delay); this._timers.add(timer); }

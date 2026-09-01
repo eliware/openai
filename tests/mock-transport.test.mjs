@@ -87,3 +87,8 @@ test('drops a queued message when the socket closes before delivery', async () =
   await new Promise(resolve => setTimeout(resolve, 0));
   expect(seen).toEqual([]);
 });
+
+test('uses configured array events as the mock scenario', async () => {
+  const Mock = createMockResponsesTransport([{ type: 'outer' }], { events: [{ type: 'configured' }] }); const socket = new Mock(); const seen = [];
+  socket.on('message', value => seen.push(JSON.parse(value).type)); socket.send('{}'); await tick(); expect(seen).toEqual(['configured']); socket.close();
+});
