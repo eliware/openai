@@ -2,9 +2,9 @@ import { ResponsesError, abortError } from '../errors.mjs';
 import { normalizeEvent } from '../events.mjs';
 import { InjectableResponsesWS } from './socket.mjs';
 export class ResponsesWebSocketAdapter {
-  constructor(client, options = {}, httpResponses = client.responses) { this.socket = new InjectableResponsesWS(client, options); this.httpResponses = httpResponses; this.inputItems = httpResponses?.inputItems; this.inputTokens = httpResponses?.inputTokens; this._readyPromise = null; this._closed = false; this._activeStreams = new Set(); }
+  constructor(client, options = {}, httpResponses = client.responses) { this.socket = new InjectableResponsesWS(client, options); this.httpResponses = httpResponses; this.inputItems = httpResponses?.inputItems; this.inputTokens = httpResponses?.inputTokens; this._readyPromise = null; this._closed = false; this._activeStreams = new Set(); this._requestLock = Promise.resolve(); }
   create(input = {}, options = {}) { if (this._closed) return Promise.reject(new ResponsesError('Responses WebSocket is closed')); const { stream = false, ...response } = input; const iterator = this.events(response, options); if (stream) return iterator; return (async () => { let completed; for await (const event of iterator) if (event.type === 'response.completed') completed = event.response; return completed; })(); }
-  createWithEvents(input = {}, handlers = {}) { return this.create(input, handlers); }
+  createWithEvents(input = {}, handlers = {}) { if (input.stream) return (async () => { for await (const event of this.create(input, handlers)) void event; })(); return this.create(input, handlers); }
   events(response = {}, options = {}) { return this._request(response, options); }
   _handleEvent(event, handlers = {}) {
     handlers.onEvent?.(event, event.raw);
@@ -16,11 +16,15 @@ export class ResponsesWebSocketAdapter {
     if (event.type === 'response.output_text.done') handlers.onTextDone?.(event.text, event);
     if (event.type === 'response.output_item.added') handlers.onItemAdded?.(event.item, event);
     if (event.type === 'response.output_item.done') handlers.onItemDone?.(event.item, event);
-    if (event.type === 'response.completed') handlers.onResponseCompleted?.(event.response, event);
+    if (event.type === 'response.completed') { handlers.onCompleted?.(event.response, event); handlers.onResponseCompleted?.(event.response, event); }
   }
   async *_request(response, { signal, onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted, onError } = {}) {
     const abort = () => abortError(signal);
     if (signal?.aborted) { const error = abort(); onError?.(error, { type: 'abort' }); throw error; }
+    let release;
+    const previous = this._requestLock;
+    this._requestLock = new Promise(resolve => { release = resolve; });
+    await previous;
     const events = this.socket.stream();
     this._activeStreams.add(events);
     let aborted = false;
@@ -52,8 +56,8 @@ export class ResponsesWebSocketAdapter {
         const event = result.value;
         if (event.type === 'message') {
           const message = normalizeEvent(event.message, event);
-          this._handleEvent(message, { onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted });
-          if (message.type === 'response.completed') { yield message; onCompleted?.(message.response, message); return; }
+          this._handleEvent(message, { onEvent, onTextDelta, onTextDone, onItemAdded, onItemDone, onResponseCreated, onResponseProgress, onContentPartAdded, onContentPartDone, onResponseCompleted, onCompleted });
+          if (message.type === 'response.completed') { yield message; return; }
           if (message.type === 'response.failed') { const error = new ResponsesError(message.error?.message ?? 'Response failed', { event: message }); onError?.(error, message); throw error; }
           if (message.type === 'response.incomplete') { const error = new ResponsesError(message.incomplete_details?.reason ?? 'Response incomplete', { event: message }); onError?.(error, message); throw error; }
           yield message;
@@ -67,7 +71,7 @@ export class ResponsesWebSocketAdapter {
         }
       }
       const error = new ResponsesError('Responses WebSocket ended before completion', { event: { type: 'end' } }); onError?.(error, normalizeEvent({ type: 'end' })); throw error;
-    } finally { signal?.removeEventListener('abort', onAbort); this._activeStreams.delete(events); await events.return?.(); }
+    } finally { signal?.removeEventListener('abort', onAbort); this._activeStreams.delete(events); await events.return?.(); release(); }
   }
 
   stream(input = {}, options = {}) { return this.create({ ...input, stream: true }, options); }
