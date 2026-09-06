@@ -2,6 +2,8 @@
 
 ## @eliware/openai [![npm version](https://img.shields.io/npm/v/@eliware/openai.svg)](https://www.npmjs.com/package/@eliware/openai)[![license](https://img.shields.io/github/license/eliware/openai.svg)](LICENSE)[![build status](https://github.com/eliware/openai/actions/workflows/nodejs.yml/badge.svg)](https://github.com/eliware/openai/actions)
 
+Documentation: [docs](docs/README.md) · [specifications](specs/README.md) · [examples](examples/README.md)
+
 > A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.
 
 ---
@@ -11,8 +13,12 @@
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Configuration](#configuration)
+- [Pricing](#pricing)
 - [API](#api)
 - [TypeScript](#typescript)
+- [Validation](#validation)
+- [Documentation](#documentation)
 - [License](#license)
 
 ## Features
@@ -44,11 +50,46 @@ import { createOpenAI } from '@eliware/openai';
 
 (async () => {
   // Optionally pass your API key, or set OPENAI_API_KEY in your environment
-  const openai = createOpenAI();
+const openai = createOpenAI();
   // Example: list models
   // const models = await openai.models.list();
   // console.log(models);
 })();
+```
+
+## Configuration
+
+Set `OPENAI_API_KEY` in a local `.env` file or the process environment, or
+pass `apiKey` directly to `createOpenAI()`. Never commit `.env` files or real
+credentials. The complete local environment contract is documented in
+[`.env.example`](.env.example).
+
+### Pricing
+
+The pricing API supports the GPT-5.6 Luna, Terra, and Sol models. It accepts
+Responses API usage objects and applies the shared long-context and cache-write
+policies used by the Eliware tools:
+
+The catalog covers standard text-token pricing only. Fast service-tier pricing,
+hosted-tool call fees, batch pricing, and image or other modality-specific
+charges are outside this module’s scope.
+
+```js
+import { calculateUsageCostBreakdown } from '@eliware/openai/pricing';
+
+const cost = calculateUsageCostBreakdown('gpt-5.6-luna', response.usage);
+console.log(cost.estimated_cost_usd, cost.output_cost_usd);
+```
+
+Use `createPricingAccumulator()` to aggregate multiple requests and retain
+per-model totals:
+
+```js
+import { createPricingAccumulator } from '@eliware/openai/pricing';
+
+const totals = createPricingAccumulator();
+totals.add('gpt-5.6-luna', response.usage);
+console.log(totals.summary());
 ```
 
 ## API
@@ -124,7 +165,7 @@ Both helpers throw clear errors when required configuration is missing.
 
 `createOpenAI` requires an API key from `apiKey` or `OPENAI_API_KEY`. Transport, timeout, retry, abort, and WebSocket shutdown errors preserve available upstream context. Always await `responses.close()` for WebSocket clients.
 
-## Development
+## Validation
 
 ```bash
 npm test
@@ -133,6 +174,13 @@ npm run lint
 npm run typecheck
 npm run pack
 ```
+
+## Documentation
+
+- [User documentation](docs/README.md)
+- [Specifications](specs/README.md)
+- [Examples](examples/)
+- [Release notes](RELEASE_NOTES.md)
 
 ## Security
 
