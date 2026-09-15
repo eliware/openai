@@ -1,6 +1,6 @@
 import { expect, test } from '@jest/globals';
 import { createHTTPResponsesAdapter } from '../../src/responses-http/index.mjs';
-import { splitOptions } from '../../src/responses-http/callbacks.mjs';
+import { splitOptions } from '../../src/responses-http/callback-options.mjs';
 
 const response = { id: 'resp_1', object: 'response', output: [] };
 

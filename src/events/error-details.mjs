@@ -1,0 +1,2 @@
+function isObject(value) { return value !== null && typeof value === 'object'; }
+export function eventErrorDetails(event) { const error = isObject(event?.error) ? event.error : event; return { code: error?.code, type: error?.type, status: error?.status ?? error?.status_code, parameter: error?.param ?? error?.parameter, requestId: error?.request_id ?? error?.requestId ?? event?.request_id ?? event?.requestId ?? event?._request_id }; }

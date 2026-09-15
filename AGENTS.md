@@ -1,5 +1,7 @@
 # AGENTS.md
 
+Applies to: the entire repository.
+
 ## Project
 
 `@eliware/openai` is an ESM-first, TypeScript-ready wrapper around the official OpenAI Node.js SDK.
@@ -17,7 +19,7 @@
 
 - Keep the wrapper thin and preserve official SDK option passthrough.
 - HTTP is the default transport.
-- Responses WebSocket support is selected with `transport: 'websocket'` or `transport: 'responses-ws'`.
+- Responses WebSocket support is selected with `transport: 'websocket'`.
 - Keep HTTP and WebSocket Responses calls compatible for streaming and non-streaming usage.
 - Preserve normalized event metadata: `raw`, `responseId`, and `requestId`.
 - Normalize protocol and transport failures as `ResponsesError` with available server metadata.
@@ -38,3 +40,11 @@
 - Maintain 100% statements, branches, functions, and lines coverage without Istanbul ignore directives, except the barrel file if unavoidable.
 - Inspect `coverage/coverage-final.json` before fixing coverage gaps.
 - Live API smoke tests require an explicitly supplied credential and must never commit credentials or output containing secrets.
+
+## Intentional deviations
+
+- `tests/index.test.mjs` covers the published root entrypoint `index.mjs`,
+  which is intentionally outside `src/`; it is a public-facade composition
+  test rather than a source-module test.
+- `tests/integration.test.mjs` contains deterministic HTTP and WebSocket
+  end-to-end coverage for the root client composition.

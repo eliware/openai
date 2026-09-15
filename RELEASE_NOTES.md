@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2.0.0 — Unreleased
+
+- Removed the legacy `responses-ws` transport alias.
+- WebSocket clients now reject concurrent response requests explicitly.
+- Added shared GPT-5.6 pricing, usage normalization, cost breakdowns, and aggregation.
+
 ## 1.1.11 — August 7, 2026
 
 - Aligned repository structure, package metadata, validation scripts, CI, documentation, and release notes with Eliware library conventions.
@@ -55,7 +61,3 @@
 ## 1.1.1
 
 - Version 1.1.1 release, December 9, 2025.
-## 2.0.0 — Unreleased
-
-- Removed the legacy `responses-ws` transport alias.
-- WebSocket clients now reject concurrent response requests explicitly.

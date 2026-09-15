@@ -1,0 +1,3 @@
+import { calculateUsageCost, calculateUsageCostBreakdown } from '../../src/pricing/calculator.mjs';
+test('calculates a detailed cost', () => { const usage = { input_tokens: 10, output_tokens: 2 }; expect(calculateUsageCost('gpt-5.6-luna', usage)).toBe(0.000004); expect(calculateUsageCostBreakdown('gpt-5.6-luna', usage).estimated_cost_usd).toBe(0.000004); });
+test('applies long-context pricing', () => { const result = calculateUsageCostBreakdown('gpt-5.6-luna', { input_tokens: 300000, output_tokens: 1 }); expect(result.long_context).toBe(true); expect(result.estimated_cost_usd).toBeGreaterThan(0); });

@@ -21,6 +21,56 @@ export type ResponsesRequest = ResponseCreateParams;
 export type ResponsesResponse = Response;
 export type ResponsesOutputItem = ResponseOutputItem;
 
+export type GPT56Model = 'gpt-5.6-luna' | 'gpt-5.6-terra' | 'gpt-5.6-sol';
+
+export interface ModelPricing {
+  /** USD per million uncached input tokens. */
+  input: number;
+  /** USD per million cached input tokens. */
+  cachedInput: number;
+  /** USD per million output tokens. */
+  output: number;
+  /** Multiplier applied to uncached input pricing for cache writes. */
+  cacheWriteMultiplier: number;
+}
+
+export declare const API_PRICING: Readonly<Record<GPT56Model, Readonly<ModelPricing>>>;
+export declare function getPricing(model: GPT56Model): Readonly<ModelPricing>;
+export declare const LONG_CONTEXT_INPUT_THRESHOLD: 272000;
+export declare const LONG_CONTEXT_INPUT_MULTIPLIERS: Readonly<{ input: 2; output: 1.5 }>;
+export interface NormalizedUsage {
+  input: number;
+  cachedInput: number;
+  cacheWrite: number;
+  output: number;
+}
+export interface ResponsesUsage {
+  input_tokens?: number;
+  output_tokens?: number;
+  input_tokens_details?: { cached_tokens?: number; cache_write_tokens?: number };
+}
+export declare function normalizeUsage(usage?: ResponsesUsage | null): NormalizedUsage;
+export interface PricingBreakdown {
+  model: GPT56Model;
+  input_tokens: number;
+  cached_tokens: number;
+  cache_write_tokens: number;
+  output_tokens: number;
+  long_context: boolean;
+  uncached_input_cost_usd: number;
+  cached_input_cost_usd: number;
+  cache_write_cost_usd: number;
+  output_cost_usd: number;
+  estimated_cost_usd: number;
+}
+export declare function calculateUsageCost(model: GPT56Model, usage?: ResponsesUsage | null): number;
+export declare function calculateUsageCostBreakdown(model: GPT56Model, usage?: ResponsesUsage | null): PricingBreakdown;
+export interface PricingAccumulator {
+  add(model: GPT56Model, usage?: ResponsesUsage | null): this;
+  summary(): { requests: number; estimated_cost_usd: number; models: Record<GPT56Model, Omit<PricingBreakdown, 'model' | 'long_context' | 'uncached_input_cost_usd' | 'cached_input_cost_usd' | 'cache_write_cost_usd' | 'output_cost_usd'>> };
+}
+export declare function createPricingAccumulator(): PricingAccumulator;
+
 export type ResponsesEventHandlerOptions = {
   signal?: AbortSignal;
   onEvent?: (event: ResponsesEvent) => void;

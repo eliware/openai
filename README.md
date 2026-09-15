@@ -6,6 +6,14 @@ Documentation: [docs](docs/README.md) · [specifications](specs/README.md) · [e
 
 > A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.
 
+Maintained by Eliware <eliware@eliware.org>.
+
+Copyright (c) 2026 Eliware.
+
+## Attribution
+
+This package is maintained and published by Eliware <eliware@eliware.org>.
+
 ---
 
 ## Table of Contents
@@ -75,7 +83,7 @@ hosted-tool call fees, batch pricing, and image or other modality-specific
 charges are outside this module’s scope.
 
 ```js
-import { calculateUsageCostBreakdown } from '@eliware/openai/pricing';
+import { calculateUsageCostBreakdown } from '@eliware/openai';
 
 const cost = calculateUsageCostBreakdown('gpt-5.6-luna', response.usage);
 console.log(cost.estimated_cost_usd, cost.output_cost_usd);
@@ -85,7 +93,7 @@ Use `createPricingAccumulator()` to aggregate multiple requests and retain
 per-model totals:
 
 ```js
-import { createPricingAccumulator } from '@eliware/openai/pricing';
+import { createPricingAccumulator } from '@eliware/openai';
 
 const totals = createPricingAccumulator();
 totals.add('gpt-5.6-luna', response.usage);
@@ -169,10 +177,7 @@ Both helpers throw clear errors when required configuration is missing.
 
 ```bash
 npm test
-npm run test:gaps
 npm run lint
-npm run typecheck
-npm run pack
 ```
 
 ## Documentation
@@ -198,7 +203,7 @@ const openai: import('@eliware/openai').OpenAIClient = createOpenAI();
 
 ## Support
 
-For help, questions, or to chat with the author and community, visit:
+For help, questions, or to chat with the Eliware team and community, visit:
 
 [![Discord](https://eliware.org/logos/discord_96.png)](https://discord.gg/M6aTR9eTwN)[![eliware.org](https://eliware.org/logos/eliware_96.png)](https://discord.gg/M6aTR9eTwN)
 
@@ -206,7 +211,7 @@ For help, questions, or to chat with the author and community, visit:
 
 ## License
 
-[MIT © 2025 Eli Sterling, eliware.org](LICENSE)
+[MIT © Eliware](LICENSE)
 
 ## Links
 

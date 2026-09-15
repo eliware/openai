@@ -10,7 +10,10 @@
         "index.d.ts",
         "README.md",
         "LICENSE",
-        "examples"
+        "examples",
+        "RELEASE_NOTES.md",
+        "docs",
+        "specs"
     ],
     "exports": {
         ".": {
@@ -20,14 +23,11 @@
     },
     "scripts": {
         "test": "eliware-test",
-        "test:gaps": "eliware-test --ignore-100x4",
-        "lint": "eliware-test --lint",
-        "typecheck": "tsc --project tsconfig.json",
-        "pack": "npm pack --dry-run"
+        "lint": "eliware-test --lint"
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/eliware/openai.git"
+        "url": "https://github.com/eliware/openai"
     },
     "keywords": [
         "openai",
@@ -39,14 +39,21 @@
         "ai",
         "eliware"
     ],
-    "author": "Eli Sterling, eliware.org <eli@eliware.org>",
+    "author": "Eliware <eliware@eliware.org>",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/eliware/openai/issues"
     },
     "homepage": "https://github.com/eliware/openai#readme",
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "engines": {
+        "node": ">=26"
+    },
     "devDependencies": {
-        "@eliware/test": "^2.2.0",
+        "@eliware/test": "^4.0.0",
         "typescript": "^7.0.2"
     },
     "jest": {

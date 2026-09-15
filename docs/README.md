@@ -1,5 +1,7 @@
 # Documentation
 
+[Root README](../README.md)
+
 `@eliware/openai` is a thin ESM and TypeScript wrapper around the official
 OpenAI Node.js SDK.
 
