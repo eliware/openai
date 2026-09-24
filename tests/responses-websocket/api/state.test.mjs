@@ -7,4 +7,11 @@ test("initializes and reports adapter state", () => {
   expect(state(adapter)).toBe("open");
   adapter._closePromise = Promise.resolve();
   expect(state(adapter)).toBe("closing");
+  adapter._closePromise = null;
+  adapter.socket.socket.readyState = 99;
+  expect(state(adapter)).toBe("closed");
+  adapter.socket.socket.readyState = -1;
+  expect(state(adapter)).toBe("closed");
+  adapter.socket.socket.readyState = undefined;
+  expect(state(adapter)).toBe("closed");
 });

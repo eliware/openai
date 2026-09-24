@@ -31,7 +31,7 @@ Maintained by Eliware <eliware@eliware.org>. Author: Eliware <eliware@eliware.or
 
 ## Requirements
 
-- Node.js 26 or newer.
+- Node.js 26.x.
 - An OpenAI API key for authenticated requests.
 
 ## Setup

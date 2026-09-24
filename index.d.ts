@@ -251,7 +251,7 @@ export declare function createMockResponsesTransport(
 ): WebSocketConstructor;
 
 export declare function createOpenAI(
-  options: OpenAIOptions & { transport: "websocket" },
+  options: Partial<OpenAIOptions> & { transport: "websocket" },
 ): OpenAIWebSocketClient;
 export declare function createOpenAI(
   options?: string | (OpenAIOptions & { transport?: "http" }),

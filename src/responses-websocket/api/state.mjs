@@ -15,5 +15,7 @@ export function isOpen(adapter) {
 
 export function state(adapter) {
   if (adapter._closePromise && !adapter._closed) return "closing";
-  return ["connecting", "open", "closing", "closed"][adapter.socket.socket?.readyState ?? 3];
+  const states = ["connecting", "open", "closing", "closed"];
+  const readyState = adapter.socket.socket?.readyState ?? 3;
+  return states[readyState] ?? "closed";
 }
