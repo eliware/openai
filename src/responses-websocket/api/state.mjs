@@ -6,7 +6,7 @@ export function initializeState(adapter, httpResponses) {
   adapter._closePromise = null;
   adapter._closed = false;
   adapter._activeStreams = new Set();
-  adapter._requestActive = false;
+  adapter._activeRequest = null;
 }
 
 export function isOpen(adapter) { return adapter.socket.socket?.readyState === 1; }

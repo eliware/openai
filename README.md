@@ -74,13 +74,18 @@ credentials. The complete local environment contract is documented in
 
 ### Pricing
 
-The pricing API supports the GPT-5.6 Luna, Terra, and Sol models. It accepts
-Responses API usage objects and applies the shared long-context and cache-write
-policies used by the Eliware tools:
+The pricing API supports GPT-6 Astra, Sol, and Luna plus GPT-5.6 Luna, Terra,
+and Sol. It accepts Responses API usage objects and applies the documented
+long-context and cache-write multipliers:
 
-The catalog covers standard text-token pricing only. Fast service-tier pricing,
-hosted-tool call fees, batch pricing, and image or other modality-specific
-charges are outside this module’s scope.
+The catalog uses standard text-token rates per million tokens. For GPT-6, rates
+are Astra `$10 / $1 / $12.50 / $50`, Sol `$2 / $0.20 / $2.50 / $10`, and Luna
+`$0.10 / $0.01 / $0.125 / $0.50` for input, cached input, cache writes, and
+output. Requests above 272K input tokens apply the documented 2× input/cache and
+1.5× output multipliers. Fast service-tier pricing, hosted-tool call fees, Batch
+and Flex discounts, regional uplifts, and image or other modality-specific
+charges are outside this estimator. The estimator applies standard token rates
+and reported usage only; it is not a complete invoice calculator.
 
 ```js
 import { calculateUsageCostBreakdown } from '@eliware/openai';
@@ -121,8 +126,8 @@ const openai = createOpenAI({
   transport: 'websocket',
 });
 
-const response = await openai.responses.create({ model: 'gpt-5.6-luna', input: 'Hello' });
-const events = openai.responses.stream({ model: 'gpt-5.6-luna', input: 'Hello' });
+const response = await openai.responses.create({ model: 'gpt-6-luna', input: 'Hello' });
+const events = openai.responses.stream({ model: 'gpt-6-luna', input: 'Hello' });
 for await (const event of events) console.log(event);
 
 await openai.responses.close();
@@ -130,6 +135,46 @@ await openai.responses.close();
 
 Version 2 supports one in-flight WebSocket response request per client.
 Concurrent requests reject explicitly to prevent response-event cross-talk.
+
+For GPT-6, use `responses.steer(previousResponseId, input)` while consuming the
+active stream to queue mid-turn user direction. If the stream emits
+`response.steer.pending`, return the required tool results or approvals with
+`responses.continueResponse({ previous_response_id, input, ... })`; automatic
+steering continuations remain part of the same iterator. The application owns
+tool execution and must preserve each tool call's original `call_id`.
+
+GPT-6 migration notes: Astra supports reasoning effort `low`, `medium`, `high`,
+`xhigh`, and `max`; Sol and Luna also support `none`. For reasoning effort other
+than `none`, omit `temperature`, `top_p`, and `top_logprobs`; Chat Completions
+also requires omitting `logprobs`. Use Responses for tool calling with reasoning;
+Chat Completions function calling on Sol and Luna requires
+`reasoning_effort: 'none'`, and Astra tool calling requires Responses. For
+Responses, also remove `message.output_text.logprobs` from `include`. Replace
+`prompt_cache_retention` with `prompt_cache_options: { ttl: '30m' }`; retain
+stable prefixes, ensure reusable prefixes reach the 1,024 visible-token cache
+minimum, and review cache breakpoints and cache-write costs. GPT-6 routing is
+automatic, so `prompt_cache_key` is optional and useful for separate cache
+accounting, not routing. EU data residency is available only with Standard
+processing. Model-specific constraints are validated by the API; this wrapper
+passes SDK request options through.
+
+GPT-6 also supports `configuration_update` input items between responses to
+change reasoning effort while preserving request-level effort and cache prefix.
+The item changes reasoning effort only. Do not place adjacent configuration
+updates in history or combine them with automatic compaction or truncation; the
+API rejects those combinations.
+
+For GPT-6 async function tools, set `async: true`, then treat the emitted
+`ResponseFunctionToolCall` item as application-owned work. Return its result in
+a later `function_call_output` using the exact original `call_id`. Async
+execution applies to function and custom tools run by your application, not
+hosted built-in tools; this package does not execute tools. See the
+[OpenAI API pricing](https://developers.openai.com/api/docs/pricing),
+[GPT-6 migration guide](https://developers.openai.com/api/docs/guides/latest-model),
+[prompt caching guide](https://developers.openai.com/api/docs/guides/prompt-caching),
+[async tool calling guide](https://developers.openai.com/api/docs/guides/async-tool-calling),
+and [mid-turn steering guide](https://developers.openai.com/api/docs/guides/steering)
+for current service behavior.
 
 The WebSocket adapter also exposes a transport-neutral event iterator. Use `events()` when you need protocol events without collecting a final response:
 

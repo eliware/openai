@@ -11,12 +11,13 @@ describe('ResponsesWebSocketAdapter', () => {
     const adapter = make(); const seen = [];
     adapter._handleEvent({ type: 'response.output_item.added', item: 1 }, { onItemAdded: item => seen.push(item) });
     adapter._handleEvent({ type: 'response.output_item.done', item: 2 }, { onItemDone: item => seen.push(item) }); expect(seen).toEqual([1, 2]);
-    FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.incomplete', incomplete_details: { reason: 'length' } } }];
+    FakeResponsesWS.events = [{ type: 'message', message: { type: 'response.incomplete', response: { status: 'incomplete', incomplete_details: { reason: 'length' } } } }];
     await expect(adapter.create({})).rejects.toThrow('length');
     FakeResponsesWS.events = [{ type: 'unknown' }, { type: 'close' }]; await expect(adapter.create({})).rejects.toThrow('closed');
     FakeResponsesWS.events = []; await expect(adapter.create({})).rejects.toThrow('ended');
   });
   test('covers default arguments and fallback branches', async () => {
+    FakeResponsesWS.events = undefined;
     const adapter = new ResponsesWebSocketAdapter({});
     expect(adapter.state).toBe('open');
     await expect(adapter.create()).resolves.toMatchObject({ status: 'completed' });

@@ -4,7 +4,10 @@
 
 - Removed the legacy `responses-ws` transport alias.
 - WebSocket clients now reject concurrent response requests explicitly.
-- Added shared GPT-5.6 pricing, usage normalization, cost breakdowns, and aggregation.
+- Added standard text-token pricing, usage normalization, cost breakdowns, and aggregation for GPT-6 Astra, Sol, and Luna.
+- Added typed GPT-6 async tool and reasoning-configuration update support through the official OpenAI SDK.
+- Added WebSocket mid-turn steering and same-connection continuation methods.
+- Updated the OpenAI SDK minimum to 7.10.0 for GPT-6 request and event types.
 
 ## 1.1.11 — August 7, 2026
 

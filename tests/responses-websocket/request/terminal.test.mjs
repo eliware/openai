@@ -11,6 +11,6 @@ test('processes lifecycle, reconnect, incomplete, and unknown events', () => {
   const seen = []; expect(processEvent({ type: 'connecting' }, { onEvent: event => seen.push(event.type) })).toEqual({});
   expect(processEvent({ type: 'reconnecting' }, {}).error).toBeTruthy();
   expect(processEvent({ type: 'error', error: new Error('socket') }, {}).error).toBeTruthy();
-  expect(processEvent({ type: 'message', message: { type: 'response.incomplete', incomplete_details: { reason: 'length' } } }, {}).error).toBeTruthy();
+  expect(processEvent({ type: 'message', message: { type: 'response.incomplete', response: { incomplete_details: { reason: 'length' } } } }, {}).error).toBeTruthy();
   expect(processEvent({ type: 'unknown' }, {})).toEqual({}); expect(seen).toEqual(['connecting']);
 });

@@ -6,12 +6,12 @@ import { ensureReady } from './request/ready.mjs';
 import { readResponseEvents } from './request/loop.mjs';
 
 export async function* requestEvents(adapter, response, options = {}) {
-  const { signal, callbacks, events, controller, onAbort, next } = openRequest(adapter, response, options);
+  const { signal, callbacks, events, controller, onAbort, next, control } = openRequest(adapter, response, options);
   const abort = () => abortError(signal);
   try {
     await ensureReady(adapter, signal, callbacks);
     if (signal?.aborted) { const error = abort(); callbacks.onError?.(error, { type: 'abort' }); throw error; }
     sendRequest(adapter, response, callbacks);
-    yield* readResponseEvents(next, callbacks, controller, signal);
+    yield* readResponseEvents(next, callbacks, controller, signal, control);
   } finally { cleanupRequest(adapter, events, signal, onAbort); }
 }

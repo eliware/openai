@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { Response, ResponseCreateParams, ResponseOutputItem, ResponseStreamEvent } from 'openai/resources/responses/responses';
+import type { FunctionTool, Response, ResponseCreateParams, ResponseFunctionToolCall, ResponseInputItem, ResponseOutputItem, ResponseOutputItemDoneEvent, ResponseStreamEvent, ResponseSteerAcceptedEvent, ResponseSteerFailedEvent, ResponseSteerInput, ResponseSteerPendingEvent } from 'openai/resources/responses/responses';
 
 export interface ResponsesEventMetadata {
   raw?: unknown;
@@ -14,14 +14,25 @@ export type ResponsesLifecycleEvent =
 
 export type ResponsesEvent =
   | (ResponseStreamEvent & ResponsesEventMetadata)
+  | (ResponseSteerAcceptedEvent & ResponsesEventMetadata)
+  | (ResponseSteerPendingEvent & ResponsesEventMetadata)
+  | (ResponseSteerFailedEvent & ResponsesEventMetadata)
   | (ResponsesLifecycleEvent & ResponsesEventMetadata)
   | (Record<string, unknown> & ResponsesEventMetadata);
 
 export type ResponsesRequest = ResponseCreateParams;
 export type ResponsesResponse = Response;
 export type ResponsesOutputItem = ResponseOutputItem;
+/** OpenAI SDK function tool configured for application-owned asynchronous execution. */
+export type ResponsesAsyncFunctionTool = FunctionTool & { async: true };
+/** GPT-6 async function call item; preserve its call_id when returning the result. */
+export type ResponsesAsyncFunctionCall = ResponseFunctionToolCall & { async: true };
+/** Stream event carrying a completed GPT-6 async function call item. */
+export type ResponsesAsyncFunctionCallEvent = Omit<ResponseOutputItemDoneEvent, 'item'> & { item: ResponsesAsyncFunctionCall };
+/** SDK function-call result tightened to require the originating call_id. */
+export type ResponsesFunctionCallOutput = ResponseInputItem.FunctionCallOutput & { call_id: string };
 
-export type GPT56Model = 'gpt-5.6-luna' | 'gpt-5.6-terra' | 'gpt-5.6-sol';
+export type PricedModel = 'gpt-6-astra' | 'gpt-6-sol' | 'gpt-6-luna' | 'gpt-5.6-luna' | 'gpt-5.6-terra' | 'gpt-5.6-sol';
 
 export interface ModelPricing {
   /** USD per million uncached input tokens. */
@@ -34,8 +45,8 @@ export interface ModelPricing {
   cacheWriteMultiplier: number;
 }
 
-export declare const API_PRICING: Readonly<Record<GPT56Model, Readonly<ModelPricing>>>;
-export declare function getPricing(model: GPT56Model): Readonly<ModelPricing>;
+export declare const API_PRICING: Readonly<Record<PricedModel, Readonly<ModelPricing>>>;
+export declare function getPricing(model: PricedModel): Readonly<ModelPricing>;
 export declare const LONG_CONTEXT_INPUT_THRESHOLD: 272000;
 export declare const LONG_CONTEXT_INPUT_MULTIPLIERS: Readonly<{ input: 2; output: 1.5 }>;
 export interface NormalizedUsage {
@@ -51,7 +62,7 @@ export interface ResponsesUsage {
 }
 export declare function normalizeUsage(usage?: ResponsesUsage | null): NormalizedUsage;
 export interface PricingBreakdown {
-  model: GPT56Model;
+  model: PricedModel;
   input_tokens: number;
   cached_tokens: number;
   cache_write_tokens: number;
@@ -63,11 +74,11 @@ export interface PricingBreakdown {
   output_cost_usd: number;
   estimated_cost_usd: number;
 }
-export declare function calculateUsageCost(model: GPT56Model, usage?: ResponsesUsage | null): number;
-export declare function calculateUsageCostBreakdown(model: GPT56Model, usage?: ResponsesUsage | null): PricingBreakdown;
+export declare function calculateUsageCost(model: PricedModel, usage?: ResponsesUsage | null): number;
+export declare function calculateUsageCostBreakdown(model: PricedModel, usage?: ResponsesUsage | null): PricingBreakdown;
 export interface PricingAccumulator {
-  add(model: GPT56Model, usage?: ResponsesUsage | null): this;
-  summary(): { requests: number; estimated_cost_usd: number; models: Record<GPT56Model, Omit<PricingBreakdown, 'model' | 'long_context' | 'uncached_input_cost_usd' | 'cached_input_cost_usd' | 'cache_write_cost_usd' | 'output_cost_usd'>> };
+  add(model: PricedModel, usage?: ResponsesUsage | null): this;
+  summary(): { requests: number; estimated_cost_usd: number; models: Partial<Record<PricedModel, Omit<PricingBreakdown, 'model' | 'long_context' | 'uncached_input_cost_usd' | 'cached_input_cost_usd' | 'cache_write_cost_usd' | 'output_cost_usd'>>> };
 }
 export declare function createPricingAccumulator(): PricingAccumulator;
 
@@ -123,6 +134,10 @@ export interface ResponsesWebSocketAdapter {
   createWithEvents(input?: ResponsesRequest, handlers?: ResponsesEventHandlerOptions): Promise<ResponsesResponse>;
   events(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
   stream(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
+  /** Queue GPT-6 steering input for the current response on the active WebSocket connection. */
+  steer(previousResponseId: string, input: ResponseSteerInput): void;
+  /** Continue a response after `response.steer.pending` using its previous response ID and required input. */
+  continueResponse(input: ResponsesRequest & { previous_response_id: string }): void;
   inputItems?: OpenAI['responses']['inputItems'];
   inputTokens?: OpenAI['responses']['inputTokens'];
   retrieve(...args: unknown[]): Promise<unknown>;
@@ -142,11 +157,15 @@ export interface HTTPResponsesEventAPI {
   events(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
   stream(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
 }
-export type OpenAIClient = OpenAI & { responses: (OpenAI['responses'] & HTTPResponsesEventAPI) | ResponsesWebSocketAdapter };
+export type OpenAIHttpClient = OpenAI & { responses: OpenAI['responses'] & HTTPResponsesEventAPI };
+export type OpenAIWebSocketClient = Omit<OpenAI, 'responses'> & { responses: ResponsesWebSocketAdapter };
+export type OpenAIClient = OpenAIHttpClient | OpenAIWebSocketClient;
 
 /** Creates an OpenAI client from an API key or full SDK options. */
 export declare function createMockResponsesTransport(events?: unknown[], options?: { autoOpen?: boolean; delay?: number; events?: (data: unknown, socket: WebSocketLike) => unknown[] }): WebSocketConstructor;
 
-export declare function createOpenAI(options?: string | OpenAIOptions): OpenAIClient;
+export declare function createOpenAI(options: OpenAIOptions & { transport: 'websocket' }): OpenAIWebSocketClient;
+export declare function createOpenAI(options?: string | (OpenAIOptions & { transport?: 'http' })): OpenAIHttpClient;
+export declare function createOpenAI(options: OpenAIOptions): OpenAIClient;
 
 export declare function normalizeEvent(event: unknown, raw?: unknown): ResponsesEvent | unknown;

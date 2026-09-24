@@ -6,6 +6,8 @@
 - [HTTP streaming example](http-streaming.mjs)
 - [WebSocket example](websocket.mjs)
 - [WebSocket streaming example](websocket-streaming.mjs)
+- [GPT-6 async tool example](gpt-6-async-tool.mjs)
+- [GPT-6 WebSocket steering example](gpt-6-steering.mjs)
 
 The runnable `.mjs` files in this directory demonstrate HTTP and WebSocket
 usage. Set `OPENAI_API_KEY` in the environment before running them; never put
