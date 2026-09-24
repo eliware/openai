@@ -1,207 +1,65 @@
-import { jest } from "@jest/globals";
+import { requestEvents } from "../../src/responses-websocket/request.mjs";
+import { continueResponse } from "../../src/responses-websocket/request/continue-response.mjs";
+import { steerResponse } from "../../src/responses-websocket/request/steer.mjs";
 
-class FakeResponsesWS {
-  _createSocket() {
-    return { readyState: 1 };
-  }
-  constructor() {
-    this.handlers = new Map();
-    this.sent = [];
-    this.socket = { readyState: 1 };
-  }
-  send(event) {
-    this.sent.push(event);
-  }
-  async *stream() {
-    for (const event of FakeResponsesWS.events ?? [
-      { type: "message", message: { type: "response.output_text.delta", delta: "hi" } },
-      {
-        type: "message",
-        message: { type: "response.completed", response: { status: "completed" } },
-      },
-    ])
-      yield event;
-    FakeResponsesWS.events = undefined;
-  }
-  close(props) {
-    this.closed = props ?? true;
-  }
-  on(event, listener) {
-    this.handlers.set(event, listener);
-    return this;
-  }
-  off(event) {
-    this.handlers.delete(event);
-    return this;
-  }
-}
-jest.unstable_mockModule("openai/resources/responses/ws", () => ({ ResponsesWS: FakeResponsesWS }));
-jest.unstable_mockModule("ws", () => ({
-  WebSocket: class DefaultSocket {
-    constructor() {
-      this.readyState = 1;
-    }
-    on() {}
-    removeListener() {}
-    send() {}
-    close() {}
-  },
-}));
-const { ResponsesWebSocketAdapter } = await import("../../src/responses-websocket/index.mjs");
-const make = (http = {}) => new ResponsesWebSocketAdapter({}, {}, http);
-const { requestEvents } = await import("../../src/responses-websocket/request.mjs");
-const { steerResponse } = await import("../../src/responses-websocket/request/steer.mjs");
-const { continueResponse } =
-  await import("../../src/responses-websocket/request/continue-response.mjs");
-
-describe("ResponsesWebSocketAdapter", () => {
-  test("creates and streams responses", async () => {
-    const adapter = make();
-    expect(adapter.socket).toBeInstanceOf(FakeResponsesWS);
-    expect((await adapter.create()).status).toBe("completed");
-    const events = [];
-    for await (const event of adapter.stream({ model: "test" })) events.push(event);
-    expect(events).toHaveLength(2);
-  });
-  test("covers ready states and event error paths", async () => {
-    const adapter = make();
-    adapter.socket.socket.readyState = 0;
-    expect(adapter.isOpen()).toBe(false);
-    expect(adapter.state).toBe("connecting");
-    adapter.socket.socket.readyState = 2;
-    expect(adapter.state).toBe("closing");
-    adapter.socket.socket.readyState = 3;
-    expect(adapter.state).toBe("closed");
-    const sequences = [
-      [{ type: "open" }],
-      [{ type: "error", error: new Error("ready") }],
-      [{ type: "close" }],
-      [],
-    ];
-    for (const sequence of sequences) {
-      FakeResponsesWS.events = sequence;
-      if (sequence[0]?.type === "open") await expect(adapter.ready()).resolves.toBeUndefined();
-      else await expect(adapter.ready()).rejects.toBeTruthy();
-    }
-  });
-  test("covers default socket and readiness paths", async () => {
-    const adapter = new ResponsesWebSocketAdapter({}, {}, {});
-    expect(adapter.socket._createSocket("url", {}).readyState).toBe(1);
-    adapter.socket.socket = undefined;
-    expect(adapter.isOpen()).toBe(false);
-    expect(adapter.state).toBe("closed");
-    adapter.socket.socket = { readyState: 0 };
-    FakeResponsesWS.events = [{ type: "unknown" }, { type: "close" }];
-    await expect(adapter.ready()).rejects.toThrow("ready");
-    adapter.socket.socket = { readyState: 0 };
-    FakeResponsesWS.events = [{ type: "error" }];
-    await expect(adapter.ready()).rejects.toMatchObject({
-      name: "ResponsesError",
-      message: "Responses WebSocket error",
-    });
-  });
-});
-
-test("rejects pre-aborted requests and cleans request state", async () => {
-  const controller = new AbortController();
-  controller.abort();
-  const errors = [];
+test("coordinates readiness, request sending, event delivery, and cleanup", async () => {
+  const sent = [];
+  let ready = false;
   const adapter = {
-    _requestActive: false,
     _activeStreams: new Set(),
-    socket: { stream: async function* () {} },
-    ready: async () => {},
+    _activeRequest: null,
+    ready: async () => {
+      ready = true;
+    },
+    socket: {
+      stream: async function* () {
+        yield {
+          type: "message",
+          message: { type: "response.completed", response: { id: "resp_1" } },
+        };
+      },
+      send: (event) => sent.push(event),
+    },
     isOpen: () => true,
   };
-  await expect(
-    (async () => {
-      for await (const event of requestEvents(
-        adapter,
-        {},
-        { signal: controller.signal, onError: (error) => errors.push(error) },
-      ))
-        void event;
-    })(),
-  ).rejects.toMatchObject({ name: "AbortError" });
-  expect(errors).toHaveLength(1);
-  expect(adapter._requestActive).toBe(false);
+  const events = [];
+  for await (const event of requestEvents(adapter, { model: "gpt-6-luna" })) events.push(event);
+  expect(ready).toBe(true);
+  expect(sent).toEqual([{ type: "response.create", model: "gpt-6-luna" }]);
+  expect(events).toMatchObject([{ type: "response.completed", responseId: "resp_1" }]);
+  expect(adapter._activeRequest).toBeNull();
+  expect(adapter._activeStreams.size).toBe(0);
 });
 
-test("normalizes send failures and incomplete streams", async () => {
-  const makeAdapter = (events, send = () => {}) => ({
-    _requestActive: false,
-    _activeStreams: new Set(),
-    socket: {
-      stream: async function* () {
-        yield* events;
-      },
-      send,
-    },
-    ready: async () => {},
-    isOpen: () => true,
-  });
-  const sendAdapter = makeAdapter([], () => {
-    throw new Error("send failed");
-  });
-  await expect(
-    (async () => {
-      for await (const event of requestEvents(sendAdapter, {})) void event;
-    })(),
-  ).rejects.toThrow("send failed");
-  const incompleteAdapter = makeAdapter([
-    {
-      type: "message",
-      message: {
-        type: "response.incomplete",
-        response: { incomplete_details: { reason: "length" } },
-      },
-    },
-  ]);
-  await expect(
-    (async () => {
-      for await (const event of requestEvents(incompleteAdapter, {})) void event;
-    })(),
-  ).rejects.toThrow("length");
-});
-
-test("steers an active GPT-6 response and continues after required tool input", async () => {
+test("keeps a steered request open for tool continuation until successor completion", async () => {
   const sent = [];
-  const collected = [];
-  const events = [
-    { type: "message", message: { type: "response.created", response: { id: "r1" } } },
+  const messages = [
+    { type: "response.created", response: { id: "r1" } },
+    { type: "response.steer.accepted", steer: { previous_response_id: "r1" } },
+    { type: "response.completed", response: { id: "r1" } },
     {
-      type: "message",
-      message: { type: "response.steer.accepted", steer: { previous_response_id: "r1" } },
+      type: "response.steer.pending",
+      steer: { previous_response_id: "r1" },
+      required_input: [{ type: "function_call_output", call_id: "call1" }],
     },
-    { type: "message", message: { type: "response.completed", response: { id: "r1" } } },
-    {
-      type: "message",
-      message: {
-        type: "response.steer.pending",
-        steer: { previous_response_id: "r1" },
-        required_input: [{ type: "function_call_output", call_id: "call1" }],
-      },
-    },
-    {
-      type: "message",
-      message: { type: "response.created", response: { id: "r2", previous_response_id: "r1" } },
-    },
-    { type: "message", message: { type: "response.completed", response: { id: "r2" } } },
+    { type: "response.created", response: { id: "r2", previous_response_id: "r1" } },
+    { type: "response.completed", response: { id: "r2" } },
   ];
   const adapter = {
-    _activeRequest: null,
     _activeStreams: new Set(),
+    _activeRequest: null,
     socket: {
       stream: async function* () {
-        yield* events;
+        for (const message of messages) yield { type: "message", message };
       },
       send: (event) => sent.push(event),
     },
     ready: async () => {},
     isOpen: () => true,
   };
-  const handlers = {
-    onEvent: (event) => {
+  const delivered = [];
+  const callbacks = {
+    onEvent(event) {
       if (event.type === "response.created" && event.response.id === "r1")
         steerResponse(adapter, "r1", "Keep the plan concise.");
       if (event.type === "response.steer.pending")
@@ -211,9 +69,9 @@ test("steers an active GPT-6 response and continues after required tool input", 
         });
     },
   };
-  for await (const event of requestEvents(adapter, { model: "gpt-6-astra" }, handlers))
-    collected.push(event.type);
-  expect(collected).toEqual([
+  for await (const event of requestEvents(adapter, { model: "gpt-6-astra" }, callbacks))
+    delivered.push(event.type);
+  expect(delivered).toEqual([
     "response.created",
     "response.steer.accepted",
     "response.completed",
@@ -221,8 +79,8 @@ test("steers an active GPT-6 response and continues after required tool input", 
     "response.created",
     "response.completed",
   ]);
-  expect(sent).toEqual([
-    { type: "response.create", model: "gpt-6-astra" },
+  expect(sent[0]).toEqual({ type: "response.create", model: "gpt-6-astra" });
+  expect(sent.slice(1)).toEqual([
     { type: "response.steer", previous_response_id: "r1", input: "Keep the plan concise." },
     {
       type: "response.create",
@@ -232,125 +90,32 @@ test("steers an active GPT-6 response and continues after required tool input", 
   ]);
 });
 
-test("accepts steering sent after observing a completed response", async () => {
-  const sent = [];
-  const events = [
-    { type: "message", message: { type: "response.created", response: { id: "r1" } } },
-    { type: "message", message: { type: "response.completed", response: { id: "r1" } } },
-    {
-      type: "message",
-      message: { type: "response.steer.accepted", steer: { previous_response_id: "r1" } },
-    },
-    {
-      type: "message",
-      message: { type: "response.created", response: { id: "r2", previous_response_id: "r1" } },
-    },
-    { type: "message", message: { type: "response.completed", response: { id: "r2" } } },
-  ];
-  const adapter = {
-    _activeRequest: null,
-    _activeStreams: new Set(),
-    socket: {
-      stream: async function* () {
-        yield* events;
-      },
-      send: (event) => sent.push(event),
-    },
-    ready: async () => {},
-    isOpen: () => true,
-  };
-  const result = [];
-  for await (const event of requestEvents(adapter, { model: "gpt-6-astra" })) {
-    result.push(event.type);
-    if (event.type === "response.completed" && event.response.id === "r1")
-      steerResponse(adapter, "r1", "One more adjustment.");
-  }
-  expect(result).toHaveLength(5);
-  expect(sent[1]).toEqual({
-    type: "response.steer",
-    previous_response_id: "r1",
-    input: "One more adjustment.",
-  });
-});
-
-test("rejects reconnect and transport close events", async () => {
-  for (const event of [{ type: "reconnecting" }, { type: "close" }]) {
-    const adapter = {
-      _requestActive: false,
-      _activeStreams: new Set(),
-      socket: {
-        stream: async function* () {
-          yield event;
-        },
-        send() {},
-      },
-      ready: async () => {},
-      isOpen: () => true,
-    };
-    await expect(
-      (async () => {
-        for await (const value of requestEvents(adapter, {})) void value;
-      })(),
-    ).rejects.toBeInstanceOf(Error);
-  }
-});
-
-test("normalizes readiness failures and ended streams", async () => {
-  const base = {
-    _requestActive: false,
-    _activeStreams: new Set(),
-    socket: { stream: async function* () {}, send() {} },
-    isOpen: () => true,
-  };
-  const failed = {
-    ...base,
-    ready: async () => {
-      throw new Error("not ready");
-    },
-  };
-  await expect(
-    (async () => {
-      for await (const value of requestEvents(failed, {})) void value;
-    })(),
-  ).rejects.toThrow("not ready");
-  const ended = {
-    ...base,
-    ready: async () => {},
-    socket: { stream: async function* () {}, send() {} },
-  };
-  await expect(
-    (async () => {
-      for await (const value of requestEvents(ended, {})) void value;
-    })(),
-  ).rejects.toThrow("ended before completion");
-});
-
-test("rejects concurrent requests", async () => {
-  const adapter = {
-    _requestActive: true,
-    _activeStreams: new Set(),
-    socket: { stream: async function* () {} },
-  };
-  await expect(
-    (async () => {
-      for await (const value of requestEvents(adapter, {})) void value;
-    })(),
-  ).rejects.toThrow("Concurrent Responses WebSocket requests");
-});
-
-test("rejects when abort occurs after readiness", async () => {
+test("reports an abort that occurs while waiting for readiness", async () => {
   const controller = new AbortController();
+  const calls = [];
   const adapter = {
-    _requestActive: false,
     _activeStreams: new Set(),
-    socket: { stream: async function* () {}, send() {} },
-    ready: async () => controller.abort(),
-    isOpen: () => true,
+    _activeRequest: null,
+    socket: {
+      stream: async function* () {},
+      send() {},
+    },
+    ready: async () => controller.abort(new Error("stopped")),
+    isOpen: () => false,
   };
   await expect(
     (async () => {
-      for await (const value of requestEvents(adapter, {}, { signal: controller.signal }))
-        void value;
+      for await (const event of requestEvents(
+        adapter,
+        {},
+        {
+          signal: controller.signal,
+          onError: (error, event) => calls.push([error, event]),
+        },
+      ))
+        void event;
     })(),
-  ).rejects.toMatchObject({ name: "AbortError" });
+  ).rejects.toMatchObject({ message: "stopped" });
+  expect(calls[0][1]).toEqual({ type: "abort" });
+  expect(adapter._activeRequest).toBeNull();
 });

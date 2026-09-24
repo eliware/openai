@@ -5,6 +5,7 @@ test("waits for stream readiness", async () => {
     isOpen: () => false,
     socket: {
       async *stream() {
+        yield { type: "message" };
         yield { type: "open" };
       },
     },
@@ -58,4 +59,14 @@ test("returns the readiness iterator after failure", async () => {
   };
   await expect(waitForStream(adapter)).rejects.toThrow("bad");
   expect(returned).toBe(true);
+  await expect(
+    waitForStream({
+      isOpen: () => false,
+      socket: {
+        async *stream() {
+          yield { type: "error" };
+        },
+      },
+    }),
+  ).rejects.toThrow("Responses WebSocket error");
 });

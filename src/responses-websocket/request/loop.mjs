@@ -3,7 +3,6 @@ import { normalizeEvent } from "../../events/normalize.mjs";
 import { processEvent } from "./terminal.mjs";
 import { readRequestEvent } from "./read.mjs";
 import { createRequestControlState } from "./control-state.mjs";
-import { hasPendingSteer } from "./control-events.mjs";
 
 export async function* readResponseEvents(
   next,
@@ -22,11 +21,6 @@ export async function* readResponseEvents(
     }
     if (outcome.done) {
       yield outcome.message;
-      if (
-        outcome.message?.type === "response.completed" &&
-        hasPendingSteer(control, outcome.message.response?.id)
-      )
-        continue;
       return;
     }
     if (outcome.message) yield outcome.message;

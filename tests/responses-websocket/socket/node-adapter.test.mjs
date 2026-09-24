@@ -21,6 +21,7 @@ test("tracks listeners and supports socket lifecycle methods", () => {
   const seen = [];
   const listener = (value) => seen.push(value);
   adapter.on("message", listener);
+  adapter.send("payload");
   listeners.get("message")("hello", false);
   expect(seen).toEqual(["hello"]);
   adapter.once("open", listener);
@@ -29,7 +30,13 @@ test("tracks listeners and supports socket lifecycle methods", () => {
   adapter.on("close", listener);
   listeners.get("close")(1000, Buffer.from("done"));
   expect(seen.at(-1)).toBe(1000);
+  adapter.close();
+  expect(adapter.addEventListener("custom", listener)).toBe(adapter);
+  listeners.get("custom")("event-listener");
+  expect(seen.at(-1)).toBe("event-listener");
+  expect(adapter.removeEventListener("custom", listener)).toBe(adapter);
   expect(adapter.off("message", listener)).toBe(adapter);
   expect(adapter.removeAllListeners()).toBe(adapter);
   expect(adapter.terminate()).toBe("terminated");
+  expect(adapter.removeAllListeners("missing")).toBe(adapter);
 });

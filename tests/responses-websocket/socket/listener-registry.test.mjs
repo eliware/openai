@@ -5,8 +5,11 @@ test("registers and removes listeners", () => {
   const r = createListenerRegistry(raw);
   const fn = () => {};
   r.add("open", fn);
+  r.add("message", fn);
   r.remove("open", fn);
   r.removeAll();
+  r.remove("missing", fn);
+  r.removeAll("missing");
   expect(raw.on).toHaveBeenCalled();
   expect(raw.removeListener).toHaveBeenCalled();
 });

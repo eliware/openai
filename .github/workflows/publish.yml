@@ -3,7 +3,7 @@ name: npm publication
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 concurrency:
   group: ${{ github.repository }}-publication-${{ github.ref }}
