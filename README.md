@@ -1,6 +1,6 @@
 # [![eliware.org](https://eliware.org/logos/brand.png)](https://discord.gg/M6aTR9eTwN)
 
-## @eliware/openai [![npm version](https://img.shields.io/npm/v/@eliware/openai.svg)](https://www.npmjs.com/package/@eliware/openai) [![license](https://img.shields.io/github/license/eliware/openai.svg)](LICENSE) [![CI](https://github.com/eliware/openai/actions/workflows/nodejs.yml/badge.svg)](https://github.com/eliware/openai/actions/workflows/nodejs.yml)
+## @eliware/openai [![npm version](https://img.shields.io/npm/v/@eliware/openai.svg)](https://www.npmjs.com/package/@eliware/openai) [![license](https://img.shields.io/github/license/eliware/openai.svg)](LICENSE) [![CI](https://github.com/eliware/openai/actions/workflows/ci.yml/badge.svg)](https://github.com/eliware/openai/actions/workflows/ci.yml)
 
 ## Table of Contents
 

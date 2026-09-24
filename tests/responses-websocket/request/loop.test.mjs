@@ -17,24 +17,10 @@ test("yields terminal messages", async () => {
 });
 
 test("fails when the stream ends first", async () => {
-  const next = async () => ({ done: true });
-  await expect(collect(readResponseEvents(next, {}, {}, undefined))).rejects.toThrow(
-    "ended before completion",
-  );
-});
-test("skips non-terminal events and reports callback errors", async () => {
   let index = 0;
   const values = [{ value: { type: "connecting" }, done: false }, { done: true }];
-  const onError = () => {};
   await expect(
-    collect(
-      readResponseEvents(
-        async () => values[index++],
-        { onError },
-        { wasAborted: () => false },
-        undefined,
-      ),
-    ),
+    collect(readResponseEvents(async () => values[index++], {}, {}, undefined)),
   ).rejects.toThrow("ended before completion");
 });
 test("yields ordinary messages and reports terminal errors", async () => {
@@ -69,6 +55,41 @@ test("handles terminal errors without an error callback", async () => {
   await expect(
     collect(readResponseEvents(next, {}, { wasAborted: () => false }, undefined)),
   ).rejects.toThrow("bad");
+});
+
+test.each([
+  [{ type: "response.failed", error: { message: "provider rejected" } }, "provider rejected"],
+  [
+    {
+      type: "response.incomplete",
+      response: { incomplete_details: { reason: "max_output_tokens" } },
+    },
+    "max_output_tokens",
+  ],
+])("notifies onError exactly once for %s terminal protocol events", async (message, reason) => {
+  const onEvents = [];
+  const onErrors = [];
+  const next = async () => ({ value: { type: "message", message }, done: false });
+
+  await expect(
+    collect(
+      readResponseEvents(
+        next,
+        {
+          onEvent: (event) => onEvents.push(event),
+          onError: (error, event) => onErrors.push({ error, event }),
+        },
+        { wasAborted: () => false },
+        undefined,
+      ),
+    ),
+  ).rejects.toMatchObject({ name: "ResponsesError", message: reason });
+
+  expect(onEvents).toHaveLength(1);
+  expect(onEvents[0].type).toBe(message.type);
+  expect(onErrors).toHaveLength(1);
+  expect(onErrors[0].error).toMatchObject({ name: "ResponsesError", message: reason });
+  expect(onErrors[0].event).toMatchObject({ type: message.type });
 });
 test("keeps the iterator open through steered incomplete and successor completion", async () => {
   let index = 0;

@@ -6,7 +6,7 @@ and cache-write policies, calculates auditable breakdowns, and aggregates
 requests by model.
 
 ```js
-import { calculateUsageCost } from "@eliware/openai/pricing";
+import { calculateUsageCost } from "@eliware/openai";
 
 const cost = calculateUsageCost("gpt-5.6-luna", response.usage);
 ```

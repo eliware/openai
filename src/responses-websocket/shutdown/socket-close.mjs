@@ -11,7 +11,7 @@ export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
       try {
         socket.terminate?.();
       } catch {}
-      onComplete(
+      done(
         new ResponsesError("Responses WebSocket close timed out", {
           event: { type: "close", code: "timeout" },
         }),
