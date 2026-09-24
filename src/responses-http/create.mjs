@@ -1,6 +1,6 @@
-import { wrapHTTPStream } from './stream.mjs';
-import { splitRequest } from './request-options.mjs';
-import { completeHTTP } from './completion.mjs';
+import { wrapHTTPStream } from "./stream.mjs";
+import { splitRequest } from "./request-options.mjs";
+import { completeHTTP } from "./completion.mjs";
 
 export function createHTTPCreate(responses) {
   return (input = {}, options = {}) => {

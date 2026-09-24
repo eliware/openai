@@ -1,6 +1,5 @@
-import { expect, test } from '@jest/globals';
-import * as stream from '../../src/responses-http/stream.mjs';
+import * as stream from "../../src/responses-http/stream.mjs";
 
-test('HTTP stream module exports its implementation', () => {
+test("HTTP stream module exports its implementation", () => {
   expect(stream).toBeDefined();
 });

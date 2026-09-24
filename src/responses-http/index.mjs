@@ -1,5 +1,5 @@
-import { createHTTPCreate } from './create.mjs';
-import { createHTTPConvenience } from './convenience.mjs';
+import { createHTTPCreate } from "./create.mjs";
+import { createHTTPConvenience } from "./convenience.mjs";
 
 export function createHTTPResponsesAdapter(responses) {
   const adapter = Object.create(responses);

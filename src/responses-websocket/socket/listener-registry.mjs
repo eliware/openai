@@ -1,4 +1,4 @@
-import { wrapSocketListener } from './event-wrapper.mjs';
+import { wrapSocketListener } from "./event-wrapper.mjs";
 
 export function createListenerRegistry(socket) {
   const listeners = new Map();
@@ -20,7 +20,8 @@ export function createListenerRegistry(socket) {
         for (const name of listeners.keys()) this.removeAll(name);
         return;
       }
-      for (const wrapped of listeners.get(event)?.values() ?? []) socket.removeListener(event, wrapped);
+      for (const wrapped of listeners.get(event)?.values() ?? [])
+        socket.removeListener(event, wrapped);
       listeners.delete(event);
     },
   };

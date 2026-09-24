@@ -1,28 +1,28 @@
 # Examples
 
-- [Root README](../README.md)
-- [Basic examples](basic/README.md)
-- [HTTP example](http.mjs)
-- [HTTP streaming example](http-streaming.mjs)
-- [WebSocket example](websocket.mjs)
-- [WebSocket streaming example](websocket-streaming.mjs)
-- [GPT-6 async tool example](gpt-6-async-tool.mjs)
-- [GPT-6 WebSocket steering example](gpt-6-steering.mjs)
+[Root README](../README.md) · [Basic example](basic/README.md)
 
-The runnable `.mjs` files in this directory demonstrate HTTP and WebSocket
-usage. Set `OPENAI_API_KEY` in the environment before running them; never put
-credentials in the files.
+Purpose: runnable examples demonstrate this package's HTTP and WebSocket requests, streaming, and GPT-6 tool workflows.
 
-## Prerequisites
+Prerequisites: Node.js 26 or newer, installed dependencies, and `OPENAI_API_KEY` in the environment. Each command runs from the repository root. Expected results are a response or streamed events. Without credentials, the client reports a configuration error. Examples never contain API keys.
 
-Node.js 26 or newer and an OpenAI API key.
+The examples use secret-safe placeholders and environment-based credentials only.
 
-## Expected results
+Runnable examples:
 
-Successful request output or streamed response events. Without credentials,
-the examples fail with the client configuration error.
+- [basic](basic/README.md)
+- [gpt-6-async-tool.mjs](gpt-6-async-tool.mjs)
+- [gpt-6-steering.mjs](gpt-6-steering.mjs)
+- [http-streaming.mjs](http-streaming.mjs)
+- [http.mjs](http.mjs)
+- [websocket-streaming.mjs](websocket-streaming.mjs)
+- [websocket.mjs](websocket.mjs)
 
-## Secret-safe placeholders
-
-Examples use `OPENAI_API_KEY` from the environment and contain no credentials,
-tokens, or other secrets.
+| Example                                        | Command                                 | Expected result                                                       |
+| ---------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------- |
+| [HTTP](http.mjs)                               | `node examples/http.mjs`                | Prints the response result.                                           |
+| [HTTP streaming](http-streaming.mjs)           | `node examples/http-streaming.mjs`      | Prints streamed response events.                                      |
+| [WebSocket](websocket.mjs)                     | `node examples/websocket.mjs`           | Prints the response and closes the socket.                            |
+| [WebSocket streaming](websocket-streaming.mjs) | `node examples/websocket-streaming.mjs` | Prints streamed events and closes the socket.                         |
+| [GPT-6 async tool](gpt-6-async-tool.mjs)       | `node examples/gpt-6-async-tool.mjs`    | Prints tool-call events and submits application-produced tool output. |
+| [GPT-6 steering](gpt-6-steering.mjs)           | `node examples/gpt-6-steering.mjs`      | Prints steering and response events.                                  |

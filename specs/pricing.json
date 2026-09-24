@@ -1,0 +1,13 @@
+{
+  "version": "8.0.0",
+  "title": "Token pricing calculator contract",
+  "status": "active",
+  "requirements": [
+    "Support exactly GPT-5.6 Luna, Terra, and Sol and GPT-6 Astra, Sol, and Luna in the catalog.",
+    "Normalize Responses API token usage and reject invalid or contradictory data.",
+    "Apply the documented 272000-token long-context and 1.25x cache-write policies.",
+    "Return auditable cost breakdowns and support per-model aggregation.",
+    "Reject unknown models rather than silently selecting a fallback.",
+    "Estimate reported standard text-token usage only; do not represent the result as a complete invoice."
+  ]
+}

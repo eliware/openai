@@ -1,4 +1,4 @@
-import { responseEvents, handleResponseEvent } from './lifecycle-api.mjs';
+import { responseEvents, handleResponseEvent } from "./lifecycle-api.mjs";
 
 export function attachEventMethods(adapter) {
   adapter.events = (response = {}, options = {}) => responseEvents(adapter, response, options);

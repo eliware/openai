@@ -9,9 +9,11 @@ export function initializeState(adapter, httpResponses) {
   adapter._activeRequest = null;
 }
 
-export function isOpen(adapter) { return adapter.socket.socket?.readyState === 1; }
+export function isOpen(adapter) {
+  return adapter.socket.socket?.readyState === 1;
+}
 
 export function state(adapter) {
-  if (adapter._closePromise && !adapter._closed) return 'closing';
-  return ['connecting', 'open', 'closing', 'closed'][adapter.socket.socket?.readyState ?? 3];
+  if (adapter._closePromise && !adapter._closed) return "closing";
+  return ["connecting", "open", "closing", "closed"][adapter.socket.socket?.readyState ?? 3];
 }

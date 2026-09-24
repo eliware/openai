@@ -1,71 +1,125 @@
 {
-    "name": "@eliware/openai",
-    "type": "module",
-    "version": "2.0.0",
-    "description": "A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.",
-    "types": "index.d.ts",
-    "files": [
-        "index.mjs",
-        "src",
-        "index.d.ts",
-        "README.md",
-        "LICENSE",
-        "examples",
-        "RELEASE_NOTES.md",
-        "docs",
-        "specs"
-    ],
-    "exports": {
-        ".": {
-            "import": "./index.mjs",
-            "types": "./index.d.ts"
-        }
-    },
-    "scripts": {
-        "test": "eliware-test",
-        "lint": "eliware-test --lint"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/eliware/openai"
-    },
-    "keywords": [
-        "openai",
-        "nodejs",
-        "api",
-        "client",
-        "typescript",
-        "esm",
-        "ai",
-        "eliware"
-    ],
-    "author": "Eliware <eliware@eliware.org>",
-    "license": "MIT",
-    "bugs": {
-        "url": "https://github.com/eliware/openai/issues"
-    },
-    "homepage": "https://github.com/eliware/openai#readme",
-    "publishConfig": {
-        "access": "public",
-        "provenance": true
-    },
-    "engines": {
-        "node": ">=26"
-    },
-    "devDependencies": {
-        "@eliware/test": "^4.0.0",
-        "typescript": "^7.0.2"
-    },
-    "jest": {
-        "testEnvironment": "node",
-        "testMatch": [
-            "**/?(*.)+(spec|test).[jt]s?(x)",
-            "**/?(*.)+(spec|test).mjs",
-            "**/?(*.)+(spec|test).cjs"
-        ]
-    },
-    "dependencies": {
-        "openai": "^7.10.0",
-        "ws": "^8.21.3"
+  "name": "@eliware/openai",
+  "type": "module",
+  "version": "8.0.0",
+  "description": "A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.",
+  "private": false,
+  "types": "index.d.ts",
+  "files": [
+    "index.mjs",
+    "src",
+    "index.d.ts",
+    "README.md",
+    "LICENSE",
+    "examples",
+    "RELEASE_NOTES.md",
+    "docs",
+    "specs"
+  ],
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "types": "./index.d.ts"
     }
+  },
+  "scripts": {
+    "test": "eliware-test",
+    "pretest": "npm run typecheck",
+    "lint": "eliware-test --lint",
+    "audit": "eliware-test --audit",
+    "format": "eliware-test --format",
+    "format:check": "eliware-test --format-check",
+    "pack": "eliware-test --pack",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "validate-test-dependency": "node -e \"import('@eliware/test')\"",
+    "validate-typescript-dependency": "node -e \"import('typescript')\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eliware/openai"
+  },
+  "keywords": [
+    "openai",
+    "nodejs",
+    "api",
+    "client",
+    "typescript",
+    "esm",
+    "ai",
+    "eliware"
+  ],
+  "author": "Eliware <eliware@eliware.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/eliware/openai/issues"
+  },
+  "homepage": "https://github.com/eliware/openai#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=26 <27"
+  },
+  "devDependencies": {
+    "@eliware/test": "^6.0.1",
+    "typescript": "^7.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/*.test.mjs"
+    ]
+  },
+  "prettier": {
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": false,
+    "quoteProps": "as-needed",
+    "jsxSingleQuote": false,
+    "trailingComma": "all",
+    "bracketSpacing": true,
+    "bracketSameLine": false,
+    "arrowParens": "always",
+    "proseWrap": "preserve",
+    "endOfLine": "lf"
+  },
+  "eliware": {
+    "apply": [
+      "general",
+      "library",
+      "npm-published"
+    ],
+    "authority": {
+      "authoritativeFor": [
+        "OpenAI SDK wrapper behavior, public exports, declarations, and supported pricing calculations."
+      ],
+      "notAuthoritativeFor": [
+        "OpenAI service behavior or pricing policy, Eliware-wide conventions, or release authorization."
+      ]
+    },
+    "crosslinks": [
+      {
+        "path": "../docs/authority-map.json",
+        "relation": "relatedAuthority",
+        "authoritativeFor": "Cross-repository ownership and authority boundaries."
+      },
+      {
+        "path": "../conventions/specs/README.md",
+        "relation": "dependsOn",
+        "authoritativeFor": "Applicable Eliware repository and package conventions."
+      },
+      {
+        "path": "../operations/authority-map.json",
+        "relation": "relatedAuthority",
+        "authoritativeFor": "Release authorization and publication handoffs."
+      }
+    ]
+  },
+  "dependencies": {
+    "openai": "^7.23.0",
+    "ws": "^8.21.3"
+  }
 }

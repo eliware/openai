@@ -1,5 +1,18 @@
-import OpenAI from 'openai';
-import type { FunctionTool, Response, ResponseCreateParams, ResponseFunctionToolCall, ResponseInputItem, ResponseOutputItem, ResponseOutputItemDoneEvent, ResponseStreamEvent, ResponseSteerAcceptedEvent, ResponseSteerFailedEvent, ResponseSteerInput, ResponseSteerPendingEvent } from 'openai/resources/responses/responses';
+import OpenAI from "openai";
+import type {
+  FunctionTool,
+  Response,
+  ResponseCreateParams,
+  ResponseFunctionToolCall,
+  ResponseInputItem,
+  ResponseOutputItem,
+  ResponseOutputItemDoneEvent,
+  ResponseStreamEvent,
+  ResponseSteerAcceptedEvent,
+  ResponseSteerFailedEvent,
+  ResponseSteerInput,
+  ResponseSteerPendingEvent,
+} from "openai/resources/responses/responses";
 
 export interface ResponsesEventMetadata {
   raw?: unknown;
@@ -8,9 +21,9 @@ export interface ResponsesEventMetadata {
 }
 
 export type ResponsesLifecycleEvent =
-  | { type: 'connecting' | 'open' }
-  | { type: 'close'; code?: number; reason?: string; unsent?: unknown }
-  | { type: 'error'; error?: unknown };
+  | { type: "connecting" | "open" }
+  | { type: "close"; code?: number; reason?: string; unsent?: unknown }
+  | { type: "error"; error?: unknown };
 
 export type ResponsesEvent =
   | (ResponseStreamEvent & ResponsesEventMetadata)
@@ -28,11 +41,16 @@ export type ResponsesAsyncFunctionTool = FunctionTool & { async: true };
 /** GPT-6 async function call item; preserve its call_id when returning the result. */
 export type ResponsesAsyncFunctionCall = ResponseFunctionToolCall & { async: true };
 /** Stream event carrying a completed GPT-6 async function call item. */
-export type ResponsesAsyncFunctionCallEvent = Omit<ResponseOutputItemDoneEvent, 'item'> & { item: ResponsesAsyncFunctionCall };
+export type ResponsesAsyncFunctionCallEvent = Omit<ResponseOutputItemDoneEvent, "item"> & {
+  item: ResponsesAsyncFunctionCall;
+};
 /** SDK function-call result tightened to require the originating call_id. */
-export type ResponsesFunctionCallOutput = ResponseInputItem.FunctionCallOutput & { call_id: string };
+export type ResponsesFunctionCallOutput = ResponseInputItem.FunctionCallOutput & {
+  call_id: string;
+};
 
-export type PricedModel = 'gpt-6-astra' | 'gpt-6-sol' | 'gpt-6-luna' | 'gpt-5.6-luna' | 'gpt-5.6-terra' | 'gpt-5.6-sol';
+export type PricedModel =
+  "gpt-6-astra" | "gpt-6-sol" | "gpt-6-luna" | "gpt-5.6-luna" | "gpt-5.6-terra" | "gpt-5.6-sol";
 
 export interface ModelPricing {
   /** USD per million uncached input tokens. */
@@ -74,11 +92,34 @@ export interface PricingBreakdown {
   output_cost_usd: number;
   estimated_cost_usd: number;
 }
-export declare function calculateUsageCost(model: PricedModel, usage?: ResponsesUsage | null): number;
-export declare function calculateUsageCostBreakdown(model: PricedModel, usage?: ResponsesUsage | null): PricingBreakdown;
+export declare function calculateUsageCost(
+  model: PricedModel,
+  usage?: ResponsesUsage | null,
+): number;
+export declare function calculateUsageCostBreakdown(
+  model: PricedModel,
+  usage?: ResponsesUsage | null,
+): PricingBreakdown;
 export interface PricingAccumulator {
   add(model: PricedModel, usage?: ResponsesUsage | null): this;
-  summary(): { requests: number; estimated_cost_usd: number; models: Partial<Record<PricedModel, Omit<PricingBreakdown, 'model' | 'long_context' | 'uncached_input_cost_usd' | 'cached_input_cost_usd' | 'cache_write_cost_usd' | 'output_cost_usd'>>> };
+  summary(): {
+    requests: number;
+    estimated_cost_usd: number;
+    models: Partial<
+      Record<
+        PricedModel,
+        Omit<
+          PricingBreakdown,
+          | "model"
+          | "long_context"
+          | "uncached_input_cost_usd"
+          | "cached_input_cost_usd"
+          | "cache_write_cost_usd"
+          | "output_cost_usd"
+        >
+      >
+    >;
+  };
 }
 export declare function createPricingAccumulator(): PricingAccumulator;
 
@@ -99,10 +140,22 @@ export type ResponsesEventHandlerOptions = {
 };
 
 export declare class ResponsesError extends Error {
-  event?: ResponsesEvent; code?: string; type?: string; status?: number; parameter?: string; requestId?: string; cause?: unknown;
+  event?: ResponsesEvent;
+  code?: string;
+  type?: string;
+  status?: number;
+  parameter?: string;
+  requestId?: string;
+  cause?: unknown;
 }
 
-export declare function eventErrorDetails(event: unknown): { code?: string; type?: string; status?: number; parameter?: string; requestId?: string };
+export declare function eventErrorDetails(event: unknown): {
+  code?: string;
+  type?: string;
+  status?: number;
+  parameter?: string;
+  requestId?: string;
+};
 
 export interface WebSocketConstructor {
   /** Node-style constructor receiving the URL and `{ headers }` options. */
@@ -121,7 +174,7 @@ export type ResponsesRequestOptions = ResponsesEventHandlerOptions & {
   timeout?: number;
 };
 
-export type Transport = 'http' | 'websocket';
+export type Transport = "http" | "websocket";
 export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0] & {
   transport?: Transport;
   maxQueueSize?: number;
@@ -130,42 +183,79 @@ export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0] & {
 };
 
 export interface ResponsesWebSocketAdapter {
-  create(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): Promise<ResponsesResponse> | AsyncIterable<ResponsesEvent>;
-  createWithEvents(input?: ResponsesRequest, handlers?: ResponsesEventHandlerOptions): Promise<ResponsesResponse>;
-  events(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
-  stream(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
+  create(
+    input?: ResponsesRequest,
+    options?: ResponsesEventHandlerOptions,
+  ): Promise<ResponsesResponse> | AsyncIterable<ResponsesEvent>;
+  createWithEvents(
+    input?: ResponsesRequest,
+    handlers?: ResponsesEventHandlerOptions,
+  ): Promise<ResponsesResponse>;
+  events(
+    input?: ResponsesRequest,
+    options?: ResponsesEventHandlerOptions,
+  ): AsyncIterable<ResponsesEvent>;
+  stream(
+    input?: ResponsesRequest,
+    options?: ResponsesEventHandlerOptions,
+  ): AsyncIterable<ResponsesEvent>;
   /** Queue GPT-6 steering input for the current response on the active WebSocket connection. */
   steer(previousResponseId: string, input: ResponseSteerInput): void;
   /** Continue a response after `response.steer.pending` using its previous response ID and required input. */
   continueResponse(input: ResponsesRequest & { previous_response_id: string }): void;
-  inputItems?: OpenAI['responses']['inputItems'];
-  inputTokens?: OpenAI['responses']['inputTokens'];
+  inputItems?: OpenAI["responses"]["inputItems"];
+  inputTokens?: OpenAI["responses"]["inputTokens"];
   retrieve(...args: unknown[]): Promise<unknown>;
   delete(...args: unknown[]): Promise<unknown>;
   cancel(...args: unknown[]): Promise<unknown>;
   parse(...args: unknown[]): Promise<unknown>;
   ready(): Promise<void>;
   isOpen(): boolean;
-  readonly state: 'connecting' | 'open' | 'closing' | 'closed';
+  readonly state: "connecting" | "open" | "closing" | "closed";
   close(options?: { code?: number; reason?: string; timeout?: number }): Promise<void>;
   on(event: string, listener: (...args: unknown[]) => void): this;
   off(event: string, listener: (...args: unknown[]) => void): this;
 }
 export interface HTTPResponsesEventAPI {
-  create(input?: ResponsesRequest, options?: ResponsesRequestOptions): Promise<ResponsesResponse> | AsyncIterable<ResponsesEvent>;
-  createWithEvents(input?: ResponsesRequest, handlers?: ResponsesEventHandlerOptions): Promise<ResponsesResponse>;
-  events(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
-  stream(input?: ResponsesRequest, options?: ResponsesEventHandlerOptions): AsyncIterable<ResponsesEvent>;
+  create(
+    input?: ResponsesRequest,
+    options?: ResponsesRequestOptions,
+  ): Promise<ResponsesResponse> | AsyncIterable<ResponsesEvent>;
+  createWithEvents(
+    input?: ResponsesRequest,
+    handlers?: ResponsesEventHandlerOptions,
+  ): Promise<ResponsesResponse>;
+  events(
+    input?: ResponsesRequest,
+    options?: ResponsesEventHandlerOptions,
+  ): AsyncIterable<ResponsesEvent>;
+  stream(
+    input?: ResponsesRequest,
+    options?: ResponsesEventHandlerOptions,
+  ): AsyncIterable<ResponsesEvent>;
 }
-export type OpenAIHttpClient = OpenAI & { responses: OpenAI['responses'] & HTTPResponsesEventAPI };
-export type OpenAIWebSocketClient = Omit<OpenAI, 'responses'> & { responses: ResponsesWebSocketAdapter };
+export type OpenAIHttpClient = OpenAI & { responses: OpenAI["responses"] & HTTPResponsesEventAPI };
+export type OpenAIWebSocketClient = Omit<OpenAI, "responses"> & {
+  responses: ResponsesWebSocketAdapter;
+};
 export type OpenAIClient = OpenAIHttpClient | OpenAIWebSocketClient;
 
 /** Creates an OpenAI client from an API key or full SDK options. */
-export declare function createMockResponsesTransport(events?: unknown[], options?: { autoOpen?: boolean; delay?: number; events?: (data: unknown, socket: WebSocketLike) => unknown[] }): WebSocketConstructor;
+export declare function createMockResponsesTransport(
+  events?: unknown[],
+  options?: {
+    autoOpen?: boolean;
+    delay?: number;
+    events?: (data: unknown, socket: WebSocketLike) => unknown[];
+  },
+): WebSocketConstructor;
 
-export declare function createOpenAI(options: OpenAIOptions & { transport: 'websocket' }): OpenAIWebSocketClient;
-export declare function createOpenAI(options?: string | (OpenAIOptions & { transport?: 'http' })): OpenAIHttpClient;
+export declare function createOpenAI(
+  options: OpenAIOptions & { transport: "websocket" },
+): OpenAIWebSocketClient;
+export declare function createOpenAI(
+  options?: string | (OpenAIOptions & { transport?: "http" }),
+): OpenAIHttpClient;
 export declare function createOpenAI(options: OpenAIOptions): OpenAIClient;
 
 export declare function normalizeEvent(event: unknown, raw?: unknown): ResponsesEvent | unknown;

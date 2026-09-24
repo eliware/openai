@@ -1,5 +1,5 @@
-import { normalizeOptions } from '../options/normalize.mjs';
-import { requireApiKey } from '../options/api-key.mjs';
+import { normalizeOptions } from "../options/normalize.mjs";
+import { requireApiKey } from "../options/api-key.mjs";
 
 export function resolveClientConfiguration(options, env) {
   const config = normalizeOptions(options);

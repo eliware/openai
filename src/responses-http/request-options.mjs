@@ -1,4 +1,4 @@
-import { splitOptions } from './callback-options.mjs';
+import { splitOptions } from "./callback-options.mjs";
 
 export function splitRequest(input, options) {
   const { handlers: inputHandlers, requestOptions: requestInput } = splitOptions(input);

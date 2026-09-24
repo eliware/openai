@@ -1,4 +1,4 @@
-import { splitOptions } from '../../responses-http/callback-options.mjs';
+import { splitOptions } from "../../responses-http/callback-options.mjs";
 
 export function prepareRequest(options) {
   const { handlers, requestOptions } = splitOptions(options);

@@ -2,13 +2,12 @@
 
 [Root README](../README.md)
 
-This directory defines the supported public contract.
+This directory contains machine-readable v8 authority records and the normative 8.0.0 public contract.
 
-Scope: public API behavior, transport contracts, pricing behavior, and
-explicit non-goals. These records are normative for the 2.0.0 implementation.
-
-- [Overview](overview.md)
-- [Requirements](requirements.md)
-- [Out of scope](out-of-scope.md)
-- [Pricing](pricing.md)
-- [Responses transports](responses.md)
+- [Applicable conventions](directives.json)
+- [Local authority registry](authority.json)
+- [Public contract overview](overview.json)
+- [Change requirements](requirements.json)
+- [Responses transport contract](responses.json)
+- [Pricing contract](pricing.json)
+- [Explicit non-goals](out-of-scope.json)

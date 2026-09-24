@@ -1,0 +1,11 @@
+{
+  "version": "8.0.0",
+  "title": "Repository change requirements",
+  "status": "active",
+  "requirements": [
+    "Update the relevant normative project record before changing public behavior.",
+    "Add or update focused tests for behavior changes and preserve complete coverage.",
+    "Keep source and test files one-to-one and within the shared file-size limits.",
+    "Do not introduce unsupported API aliases, implicit fallback behavior, or undocumented compatibility paths."
+  ]
+}

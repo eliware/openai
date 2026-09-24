@@ -1,5 +1,5 @@
 export function formatBreakdown(model, normalized, longContext, costs) {
-  const round = value => Number(value.toFixed(6));
+  const round = (value) => Number(value.toFixed(6));
   return {
     model,
     input_tokens: normalized.input,

@@ -1,302 +1,120 @@
 # [![eliware.org](https://eliware.org/logos/brand.png)](https://discord.gg/M6aTR9eTwN)
 
-## @eliware/openai [![npm version](https://img.shields.io/npm/v/@eliware/openai.svg)](https://www.npmjs.com/package/@eliware/openai)[![license](https://img.shields.io/github/license/eliware/openai.svg)](LICENSE)[![build status](https://github.com/eliware/openai/actions/workflows/nodejs.yml/badge.svg)](https://github.com/eliware/openai/actions)
-
-Documentation: [docs](docs/README.md) · [specifications](specs/README.md) · [examples](examples/README.md)
-
-> A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.
-
-Maintained by Eliware <eliware@eliware.org>.
-
-Copyright (c) 2026 Eliware.
-
-## Attribution
-
-This package is maintained and published by Eliware <eliware@eliware.org>.
-
----
+## @eliware/openai [![npm version](https://img.shields.io/npm/v/@eliware/openai.svg)](https://www.npmjs.com/package/@eliware/openai) [![license](https://img.shields.io/github/license/eliware/openai.svg)](LICENSE) [![CI](https://github.com/eliware/openai/actions/workflows/nodejs.yml/badge.svg)](https://github.com/eliware/openai/actions/workflows/nodejs.yml)
 
 ## Table of Contents
 
 - [Features](#features)
-- [Installation](#installation)
+- [Requirements](#requirements)
+- [Setup](#setup)
 - [Usage](#usage)
-- [Configuration](#configuration)
-- [Pricing](#pricing)
+- [Development](#development)
+- [Testing](#testing)
+- [Troubleshooting](#troubleshooting)
+- [Security](#security)
 - [API](#api)
-- [TypeScript](#typescript)
-- [Validation](#validation)
-- [Documentation](#documentation)
+- [Packaging](#packaging)
+- [Examples](#examples)
+- [Support](#support)
 - [License](#license)
+- [Links](#links)
 
 ## Features
 
-- Minimal wrapper for the official OpenAI Node.js SDK
-- ESM-first and TypeScript-ready
-- Simple API key management (environment or parameter)
-- Full OpenAI SDK option passthrough, including endpoints, timeouts, retries, and custom fetch
-- Selectable HTTP or Responses WebSocket transport
-- Streaming and non-streaming Responses API calls
-- Bounded WebSocket queueing with explicit shutdown
-- Example usage and tests included
+Purpose: `@eliware/openai` is an ESM-first Node.js wrapper around the official OpenAI SDK. It provides explicit HTTP and Responses WebSocket transports, typed public exports, streaming helpers, and a token-usage pricing calculator. It is intended for Node.js applications that want the SDK with these transport and pricing utilities. The package description is: A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.
+
+- HTTP and explicitly selected WebSocket Responses transports.
+- Normalized events, abort support, bounded shutdown, and typed errors.
+- Standard text-token estimates and per-model pricing aggregation for GPT-5.6 and GPT-6 models.
+
+Maintained by Eliware <eliware@eliware.org>. Author: Eliware <eliware@eliware.org>. License: MIT. Copyright (c) 2026 Eliware. See [LICENSE](LICENSE).
 
 ## Requirements
 
-- Node.js 26 or newer
-- An OpenAI API key for OpenAI usage
+- Node.js 26 or newer.
+- An OpenAI API key for authenticated requests.
 
-## Installation
+## Setup
 
-```bash
-npm install @eliware/openai
-```
+Install the published package with `npm install @eliware/openai`. Version 8.0.0 is the current repository version and should not be assumed available until its authorized publication. Package versions are declared in `package.json` and documented in [release notes](RELEASE_NOTES.md); publication occurs only after the authorized release handoff.
+
+### Configuration
+
+Runtime configuration is `OPENAI_API_KEY`, supplied through the environment or the `apiKey` option to `createOpenAI()`. The package has no runtime configuration file or command-line interface. Use [`.env.example`](.env.example) as a safe local template; keep real credentials in an untracked `.env` or secret manager.
 
 ## Usage
 
-```js
-import { createOpenAI } from '@eliware/openai';
-
-(async () => {
-  // Optionally pass your API key, or set OPENAI_API_KEY in your environment
-const openai = createOpenAI();
-  // Example: list models
-  // const models = await openai.models.list();
-  // console.log(models);
-})();
-```
-
-## Configuration
-
-Set `OPENAI_API_KEY` in a local `.env` file or the process environment, or
-pass `apiKey` directly to `createOpenAI()`. Never commit `.env` files or real
-credentials. The complete local environment contract is documented in
-[`.env.example`](.env.example).
-
-### Pricing
-
-The pricing API supports GPT-6 Astra, Sol, and Luna plus GPT-5.6 Luna, Terra,
-and Sol. It accepts Responses API usage objects and applies the documented
-long-context and cache-write multipliers:
-
-The catalog uses standard text-token rates per million tokens. For GPT-6, rates
-are Astra `$10 / $1 / $12.50 / $50`, Sol `$2 / $0.20 / $2.50 / $10`, and Luna
-`$0.10 / $0.01 / $0.125 / $0.50` for input, cached input, cache writes, and
-output. Requests above 272K input tokens apply the documented 2× input/cache and
-1.5× output multipliers. Fast service-tier pricing, hosted-tool call fees, Batch
-and Flex discounts, regional uplifts, and image or other modality-specific
-charges are outside this estimator. The estimator applies standard token rates
-and reported usage only; it is not a complete invoice calculator.
+The root package entrypoint is `@eliware/openai`; its runtime entry is `index.mjs` and TypeScript declarations are in `index.d.ts`. This repository targets package version 8.0.0; check the published version before installing, and use that exact version only after its authorized release and publication.
 
 ```js
-import { calculateUsageCostBreakdown } from '@eliware/openai';
+import { createOpenAI } from "@eliware/openai";
 
-const cost = calculateUsageCostBreakdown('gpt-5.6-luna', response.usage);
-console.log(cost.estimated_cost_usd, cost.output_cost_usd);
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const response = await openai.responses.create({ model: "gpt-6-luna", input: "Hello" });
+console.log(response.output_text);
 ```
 
-Use `createPricingAccumulator()` to aggregate multiple requests and retain
-per-model totals:
+The API key may instead be supplied through `OPENAI_API_KEY`. HTTP is the default. WebSocket transport is selected with `transport: 'websocket'`; it supports one in-flight response request per client, does not reconnect or replay interrupted requests, and requires a Node-compatible socket implementation. See [configuration](docs/configuration.md) and [transports](docs/transports.md).
 
-```js
-import { createPricingAccumulator } from '@eliware/openai';
+The pricing API supports GPT-5.6 Luna, Terra, and Sol, plus GPT-6 Astra, Sol, and Luna. It estimates standard text-token charges from Responses API usage; it is not a complete invoice calculator. Rates and exclusions are described in [pricing docs](docs/pricing.md).
 
-const totals = createPricingAccumulator();
-totals.add('gpt-5.6-luna', response.usage);
-console.log(totals.summary());
-```
+## Development
 
-## API
+Read [contributor instructions](AGENTS.md), [user documentation](docs/README.md), and [specifications](specs/README.md). The repository uses native ESM, mirrored `src/` and `tests/` modules, and Node.js 26. Install dependencies with `npm ci`.
 
-### `createOpenAI(options?: string | OpenAIOptions): OpenAIClient`
+## Testing
 
-Creates and returns a new OpenAI client instance. Pass an API key string for compatibility, or an options object accepted by the official SDK. The API key defaults to `OPENAI_API_KEY`.
+Run `npm test` for the aggregate shared validation and coverage gate, `npm run lint` for lint and workspace policy checks, and `npm run typecheck` for declaration validation. Keep coverage at 100% for statements, branches, functions, and lines. The full validation requirements are described in [AGENTS.md](AGENTS.md).
 
-```js
-createOpenAI('sk-...');
-createOpenAI({ apiKey: 'sk-...', baseURL: 'https://api.example.test/v1', timeout: 30_000, maxRetries: 3 });
-```
+## Troubleshooting
 
-### WebSocket Responses transport
-
-HTTP is the default. Select the Responses WebSocket transport when needed:
-
-```js
-const openai = createOpenAI({
-  apiKey: 'sk-...',
-  transport: 'websocket',
-});
-
-const response = await openai.responses.create({ model: 'gpt-6-luna', input: 'Hello' });
-const events = openai.responses.stream({ model: 'gpt-6-luna', input: 'Hello' });
-for await (const event of events) console.log(event);
-
-await openai.responses.close();
-```
-
-Version 2 supports one in-flight WebSocket response request per client.
-Concurrent requests reject explicitly to prevent response-event cross-talk.
-
-For GPT-6, use `responses.steer(previousResponseId, input)` while consuming the
-active stream to queue mid-turn user direction. If the stream emits
-`response.steer.pending`, return the required tool results or approvals with
-`responses.continueResponse({ previous_response_id, input, ... })`; automatic
-steering continuations remain part of the same iterator. The application owns
-tool execution and must preserve each tool call's original `call_id`.
-
-GPT-6 migration notes: Astra supports reasoning effort `low`, `medium`, `high`,
-`xhigh`, and `max`; Sol and Luna also support `none`. For reasoning effort other
-than `none`, omit `temperature`, `top_p`, and `top_logprobs`; Chat Completions
-also requires omitting `logprobs`. Use Responses for tool calling with reasoning;
-Chat Completions function calling on Sol and Luna requires
-`reasoning_effort: 'none'`, and Astra tool calling requires Responses. For
-Responses, also remove `message.output_text.logprobs` from `include`. Replace
-`prompt_cache_retention` with `prompt_cache_options: { ttl: '30m' }`; retain
-stable prefixes, ensure reusable prefixes reach the 1,024 visible-token cache
-minimum, and review cache breakpoints and cache-write costs. GPT-6 routing is
-automatic, so `prompt_cache_key` is optional and useful for separate cache
-accounting, not routing. EU data residency is available only with Standard
-processing. Model-specific constraints are validated by the API; this wrapper
-passes SDK request options through.
-
-GPT-6 also supports `configuration_update` input items between responses to
-change reasoning effort while preserving request-level effort and cache prefix.
-The item changes reasoning effort only. Do not place adjacent configuration
-updates in history or combine them with automatic compaction or truncation; the
-API rejects those combinations.
-
-For GPT-6 async function tools, set `async: true`, then treat the emitted
-`ResponseFunctionToolCall` item as application-owned work. Return its result in
-a later `function_call_output` using the exact original `call_id`. Async
-execution applies to function and custom tools run by your application, not
-hosted built-in tools; this package does not execute tools. See the
-[OpenAI API pricing](https://developers.openai.com/api/docs/pricing),
-[GPT-6 migration guide](https://developers.openai.com/api/docs/guides/latest-model),
-[prompt caching guide](https://developers.openai.com/api/docs/guides/prompt-caching),
-[async tool calling guide](https://developers.openai.com/api/docs/guides/async-tool-calling),
-and [mid-turn steering guide](https://developers.openai.com/api/docs/guides/steering)
-for current service behavior.
-
-The WebSocket adapter also exposes a transport-neutral event iterator. Use `events()` when you need protocol events without collecting a final response:
-
-```js
-const events = openai.responses.events({ model: 'gpt-5.6-luna', input: 'Hello' }, { signal });
-for await (const event of events) console.log(event);
-```
-
-`create()` and `stream()` accept `{ signal }`. Completed responses resolve normally; failed, incomplete, socket-error, and premature-close events reject with `ResponsesError`, which preserves the original event and available error metadata. `responses.close()` is awaitable and bounded; use `await responses.close({ timeout: 30_000 })` to control the shutdown deadline. On timeout it terminates the socket when supported and rejects with `ResponsesError`.
-
-Callbacks are available through `createWithEvents()` (and the second argument to `create()`) without changing the normal event iterator API. AgentX-compatible lifecycle callbacks include `onResponseCreated`, `onResponseProgress`, `onContentPartAdded`, `onContentPartDone`, `onTextDone`, and `onResponseCompleted`:
-
-```js
-await openai.responses.createWithEvents(request, {
-  onEvent: (event, raw) => {},
-  onResponseCreated: (response, event) => {},
-  onResponseProgress: (response, event) => {},
-  onContentPartAdded: (part, event) => {},
-  onContentPartDone: (part, event) => {},
-  onTextDelta: (delta, event) => {},
-  onItemAdded: (item, event) => {},
-  onItemDone: (item, event) => {},
-  onTextDone: (text, event) => {},
-  onCompleted: (response, event) => {},
-  onResponseCompleted: (response, event) => {},
-  onError: (error, event) => {},
-});
-```
-
-For deterministic tests, `createMockResponsesTransport(events)` returns an injectable WebSocket implementation. It accepts optional `{ autoOpen, delay, events }` options; the event list can include text, function/shell/MCP argument deltas, reasoning summaries, output items, terminal events, and arbitrary socket scenarios. The returned fake exposes `push()`, `error()`, `sent`, and `instances` for deterministic lifecycle tests.
-
-For Node-compatible custom transports, provide `WebSocketImpl` and optionally `url` in the client options. The constructor receives `(url, { headers })`; browser-native WebSocket constructors are not supported directly. The adapter exposes `await responses.ready()`, `responses.isOpen()`, and `responses.state` (`connecting`, `open`, `closing`, or `closed`). Events include `raw`, `responseId`, and `requestId` when supplied by the server.
-
-The WebSocket adapter also supports the familiar `responses.stream()` helper and preserves `inputItems` and `inputTokens` resources. The connection remains available while the client is retained. The WebSocket adapter
-continues to expose HTTP Responses helpers such as `retrieve`, `delete`, `cancel`, and
-`parse`. Call `responses.close()` during shutdown.
-
-Both helpers throw clear errors when required configuration is missing.
-
-## Errors / Troubleshooting
-
-`createOpenAI` requires an API key from `apiKey` or `OPENAI_API_KEY`. Transport, timeout, retry, abort, and WebSocket shutdown errors preserve available upstream context. Always await `responses.close()` for WebSocket clients.
-
-## Validation
-
-```bash
-npm test
-npm run lint
-```
-
-## Documentation
-
-- [User documentation](docs/README.md)
-- [Specifications](specs/README.md)
-- [Examples](examples/)
-- [Release notes](RELEASE_NOTES.md)
+- Missing-key errors: provide `apiKey` or set `OPENAI_API_KEY` in the process environment.
+- WebSocket readiness or shutdown issues: review [transport guidance](docs/transports.md) and await `responses.close()`.
+- Pricing discrepancies: the calculator estimates supported standard token charges only; provider billing may include excluded services or pricing modes.
 
 ## Security
 
-Treat API keys and endpoint credentials as secrets. Store them in environment variables or a secret manager; never commit `.env` files, log credentials, or expose keys in examples.
+Treat API keys and endpoint credentials as secrets. Store them in environment variables or a secret manager; never commit `.env`, log credentials, or include real keys in tests and examples. See [`.env.example`](.env.example) for the supported environment setting.
 
-## TypeScript
+## API
 
-Type definitions are included:
+The public API consists of `createOpenAI`, the exported pricing functions and types, and the declared client/event/error types. `createOpenAI()` creates a client using the official SDK options; set `transport: 'websocket'` to opt into the WebSocket adapter. `calculateUsageCostBreakdown()` estimates one response, while `createPricingAccumulator()` aggregates usage. The package does not support the removed `responses-ws` alias, Azure construction, implicit reconnect, or browser-native WebSocket constructors. See [API and transport documentation](docs/README.md) and [the type declarations](index.d.ts).
 
-```ts
-import type OpenAI from 'openai';
-import { createOpenAI } from '@eliware/openai';
-const openai: import('@eliware/openai').OpenAIClient = createOpenAI();
-```
+## Packaging
+
+The package ships its root ESM entrypoint, declarations, `src/`, and allowlisted documentation, specifications, and examples. Validate the exact packed file list with the shared pack stage before release consideration. Public publication uses npm provenance and an exact version tag matching `package.json`; it requires an explicit release handoff. See [release notes](RELEASE_NOTES.md).
+
+## Examples
+
+Runnable examples and their prerequisites are indexed in [examples/README.md](examples/README.md). Start with the [basic example](examples/basic/README.md); transport and GPT-6 examples are also available.
 
 ## Support
 
-For help, questions, or to chat with the Eliware team and community, visit:
-
-[![Discord](https://eliware.org/logos/discord_96.png)](https://discord.gg/M6aTR9eTwN)[![eliware.org](https://eliware.org/logos/eliware_96.png)](https://discord.gg/M6aTR9eTwN)
+[![Discord](https://eliware.org/logos/discord_96.png)](https://discord.gg/M6aTR9eTwN)
 
 **[eliware.org on Discord](https://discord.gg/M6aTR9eTwN)**
 
+For help, questions, or to chat with the Eliware team and community, visit [Eliware on Discord](https://discord.gg/M6aTR9eTwN), [GitHub](https://github.com/eliware/openai), or [eliware@eliware.org](mailto:eliware@eliware.org).
+
 ## License
 
-[MIT © Eliware](LICENSE)
+MIT © Eliware. See [LICENSE](LICENSE).
 
 ## Links
 
-- [Home Page](https://eliware.org)
-- [GitHub](https://github.com/eliware/openai)
-- [npm](https://www.npmjs.com/package/@eliware/openai)
-- [Discord](https://discord.gg/M6aTR9eTwN)
-
-#### Tool and item streaming
-
-The event iterator and callbacks preserve protocol event types. TypeScript consumers
-can use the exported `ResponsesEvent` union and narrow on `event.type`.
-
-Handle these tool/event families in the iterator or `onEvent` callback:
-
-- `response.output_item.added` / `response.output_item.done`
-- `response.function_call_arguments.delta` / `.done`
-- `response.shell_call_command.delta` / `.done`
-- `response.custom_tool_call_input.delta` / `.done`
-- `response.mcp_call_arguments.delta` / `.done`
-- reasoning summary/text delta and done events
-- text delta/done events
-
-Accumulate argument/input deltas by output-item ID. On the corresponding `.done` event,
-parse the completed arguments, execute or confirm the tool in the application, then
-submit its output with a new Responses request using `previous_response_id`. This
-library does not execute tools, handle confirmations, or persist tool state.
-
-`raw` contains the original transport event. `responseId` and `requestId` are populated
-when supplied by the server. Error events preserve the original event and available
-`code`, `type`, `status`, `parameter`, `requestId`, and `cause` metadata. `onError` is
-called for protocol failures, socket failures, premature close, abort, and stream
-exhaustion.
-
-### Event and error contract
-
-WebSocket lifecycle events (`connecting`, `open`, `close`, and `error`) are transport events.
-Reconnect is not performed by the 2.0 adapter; an interruption fails the active request.
-Response protocol events are yielded
-with their original `type`, plus `raw`, `responseId`, and `requestId` when available.
-`ResponsesError` preserves the originating event and exposes `code`, `type`, `status`,
-`parameter`, `requestId`, and `cause` where available. Always await `responses.close()`
-during shutdown.
+- [Eliware home](https://eliware.org)
+- [Eliware GitHub organization](https://github.com/eliware)
+- [GitHub repository](https://github.com/eliware/openai)
+- [npm package](https://www.npmjs.com/package/@eliware/openai)
+- Documentation: [docs](docs/README.md), [specifications](specs/README.md), [examples](examples/README.md)
+- [Documentation index](docs/README.md)
+- [Specifications index](specs/README.md)
+- [Applicable convention profiles](specs/directives.json)
+- [Local authority registry](specs/authority.json)
+- [Public contract overview](specs/overview.json)
+- [Project requirements](specs/requirements.json)
+- [Responses transport contract](specs/responses.json)
+- [Pricing contract](specs/pricing.json)
+- [Explicit non-goals](specs/out-of-scope.json)
+- [Examples index](examples/README.md)
+- [Release notes](RELEASE_NOTES.md)
