@@ -7,8 +7,9 @@ import { createRequestControlState } from "./control-state.mjs";
 
 export function processEvent(event, callbacks, control = createRequestControlState()) {
   if (event.type === "message") {
-    observeControlEvent(control, event.message);
-    const message = dispatch(normalizeEvent(event.message, event), callbacks);
+    const message = normalizeEvent(event.message, event);
+    observeControlEvent(control, message);
+    dispatch(message, callbacks);
     if (message.type === "response.completed") {
       if (hasPendingSteer(control, message.response?.id)) {
         control.deferredCompletion = message;

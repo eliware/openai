@@ -101,6 +101,16 @@ test("clears a rejected close promise for retry", async () => {
   await expect(close(adapter)).rejects.toThrow("broken");
   expect(adapter._closePromise).toBeNull();
 });
+
+test("returns a promise when close follows a successful close", async () => {
+  const adapter = {
+    _closed: true,
+    _closePromise: null,
+    _activeStreams: new Set(),
+    socket: { socket: { readyState: 3 } },
+  };
+  await expect(close(adapter)).resolves.toBeUndefined();
+});
 test("reuses a close already in progress", () => {
   const pending = Promise.resolve();
   const adapter = { _closed: false, _closePromise: pending };

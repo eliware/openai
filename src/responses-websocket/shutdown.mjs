@@ -2,7 +2,8 @@ import { cancelStreams } from "./shutdown/stream-cleanup.mjs";
 import { closeSocket } from "./shutdown/socket-close.mjs";
 
 export function close(adapter, props = {}) {
-  if (adapter._closed || adapter._closePromise) return adapter._closePromise;
+  if (adapter._closePromise) return adapter._closePromise;
+  if (adapter._closed) return Promise.resolve();
   const { timeout = 30_000, ...socketProps } = props ?? {};
   adapter._closePromise = new Promise((resolve, reject) => {
     cancelStreams(adapter._activeStreams);

@@ -11,7 +11,7 @@ subjects:
     directives:
       - path: ./directives.yaml
         ids:
-          - E-240.0
+          - E-220.0
     implementation:
       - path: ../src/
         role: implementation
