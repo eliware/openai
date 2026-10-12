@@ -1,11 +1,5 @@
 # Release Notes
 
-## Unreleased
-
-### Changed
-
-No unreleased changes.
-
 ## 12.0.0 — 2026-10-12
 
 ### Breaking changes
