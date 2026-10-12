@@ -29,12 +29,16 @@ No unreleased changes.
 - Move public runtime and declaration entrypoints under `src/`.
 - Apply the 272,000-token long-context policy and the 1.25 cache-write multiplier to cost estimates.
 - Keep WebSocket shutdown awaitable and bounded.
+- Align package metadata, release workflows, validation, and package files with Eliware conventions.
+- Expand end-user guides and examples for setup, pricing, transports, and troubleshooting.
 
 ### Fixed
 
 - Preserve raw event data and available response and request IDs.
 - Normalize HTTP and WebSocket failures as `ResponsesError` values.
 - Reject invalid usage data, unsupported pricing models, and concurrent WebSocket requests.
+- Include normalized metadata in steering callbacks and provider details in failure errors.
+- Give each `ready()` call independent abort handling and keep repeated `close()` calls awaitable.
 
 ### Migration
 
