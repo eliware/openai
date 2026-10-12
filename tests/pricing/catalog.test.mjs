@@ -3,6 +3,7 @@ test("catalog exposes current GPT-6 and GPT-5.6 models", () => {
   expect(Object.keys(API_PRICING)).toEqual([
     "gpt-6-astra",
     "gpt-6-sol",
+    "gpt-6.1-sol",
     "gpt-6-luna",
     "gpt-5.6-luna",
     "gpt-5.6-terra",
@@ -17,6 +18,12 @@ test("catalog exposes current GPT-6 and GPT-5.6 models", () => {
   expect(getPricing("gpt-6-sol")).toEqual({
     input: 2,
     cachedInput: 0.2,
+    output: 10,
+    cacheWriteMultiplier: 1.25,
+  });
+  expect(getPricing("gpt-6.1-sol")).toEqual({
+    input: 2,
+    cachedInput: 0.1,
     output: 10,
     cacheWriteMultiplier: 1.25,
   });

@@ -1,0 +1,30 @@
+version: "12.0"
+repositoryId: eliware/openai
+globalAuthorityMap: ../../docs/authority-map.json
+description: Local authority for the OpenAI wrapper's implementation contract
+  and pricing behavior.
+subjects:
+  - id: openai.public-contract
+    kind: specification
+    authority:
+      path: ./overview.yaml
+    directives:
+      - path: ./directives.yaml
+        ids:
+          - E-240.0
+    implementation:
+      - path: ../src/
+        role: implementation
+      - path: ../src/index.d.ts
+        role: public-declarations
+      - path: ../src/index.mjs
+        role: package-entrypoint
+      - path: ../tests/
+        role: contract-tests
+    consumers:
+      - OpenAI SDK consumers
+    reviewers:
+      - eliware/conventions
+      - eliware/operations
+    evidence: []
+    status: active

@@ -14,6 +14,12 @@ export const API_PRICING = Object.freeze({
     output: 10,
     cacheWriteMultiplier: 1.25,
   }),
+  "gpt-6.1-sol": Object.freeze({
+    input: 2,
+    cachedInput: 0.1,
+    output: 10,
+    cacheWriteMultiplier: 1.25,
+  }),
   "gpt-6-luna": Object.freeze({
     input: 0.1,
     cachedInput: 0.01,

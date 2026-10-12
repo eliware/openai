@@ -1,0 +1,12 @@
+version: 12.0.0
+title: OpenAI wrapper public contract
+status: active
+summary: A native ESM Node.js wrapper around the official OpenAI SDK with HTTP
+  and explicit WebSocket Responses transports and usage-based token pricing.
+requirements:
+  - HTTP is the default Responses transport; WebSocket use is explicit.
+  - The root entrypoint and declarations define the complete public API;
+    internal modules are connected directly without legacy aliases or fallback
+    shims.
+  - Public behavior, declarations, README guidance, examples, and tests remain
+    synchronized.

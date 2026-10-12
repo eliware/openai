@@ -15,6 +15,7 @@ test("applies long-context pricing", () => {
 test.each([
   ["gpt-6-astra", 10, 1, 50],
   ["gpt-6-sol", 2, 0.2, 10],
+  ["gpt-6.1-sol", 2, 0.1, 10],
   ["gpt-6-luna", 0.1, 0.01, 0.5],
 ])(
   "calculates standard and long-context cost for %s",

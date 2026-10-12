@@ -1,43 +1,8 @@
 {
   "name": "@eliware/openai",
+  "version": "12.0.0",
   "type": "module",
-  "version": "8.0.0",
   "description": "A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.",
-  "private": false,
-  "types": "index.d.ts",
-  "files": [
-    "index.mjs",
-    "src",
-    "index.d.ts",
-    "README.md",
-    "LICENSE",
-    "examples",
-    "RELEASE_NOTES.md",
-    "docs",
-    "specs"
-  ],
-  "exports": {
-    ".": {
-      "import": "./index.mjs",
-      "types": "./index.d.ts"
-    }
-  },
-  "scripts": {
-    "test": "eliware-test",
-    "pretest": "npm run typecheck",
-    "lint": "eliware-test --lint",
-    "audit": "eliware-test --audit",
-    "format": "eliware-test --format",
-    "format:check": "eliware-test --format-check",
-    "pack": "eliware-test --pack",
-    "typecheck": "tsc --noEmit --project tsconfig.json",
-    "validate-test-dependency": "node -e \"import('@eliware/test')\"",
-    "validate-typescript-dependency": "node -e \"import('typescript')\""
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/eliware/openai"
-  },
   "keywords": [
     "openai",
     "nodejs",
@@ -48,28 +13,63 @@
     "ai",
     "eliware"
   ],
-  "author": "Eliware <eliware@eliware.org>",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/eliware/openai/issues"
-  },
-  "homepage": "https://github.com/eliware/openai#readme",
+  "private": false,
   "publishConfig": {
     "access": "public",
     "provenance": true
   },
+  "main": "./src/index.mjs",
+  "files": [
+    "src/",
+    "docs/",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE",
+    "RELEASE_NOTES.md",
+    "examples/",
+    "specs/",
+    ".env.example"
+  ],
+  "scripts": {
+    "test": "eliware-test",
+    "lint": "eliware-test --lint",
+    "format": "eliware-test --format",
+    "format:check": "eliware-test --format-check",
+    "audit": "eliware-test --audit",
+    "pack": "eliware-test --pack",
+    "typecheck": "tsc --noEmit --project tsconfig.json"
+  },
   "engines": {
-    "node": ">=26 <27"
+    "node": ">=26"
+  },
+  "dependencies": {
+    "openai": "^7.32.0",
+    "ws": "^8.22.0"
   },
   "devDependencies": {
-    "@eliware/test": "^6.0.1",
+    "@eliware/test": "^12.0.0",
     "typescript": "^7.0.2"
   },
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
-      "**/*.test.mjs"
-    ]
+      "**/tests/**/*.test.mjs"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.mjs"
+    ],
+    "coverageReporters": [
+      "text",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
+      }
+    }
   },
   "prettier": {
     "printWidth": 100,
@@ -86,41 +86,29 @@
     "proseWrap": "preserve",
     "endOfLine": "lf"
   },
+  "author": "Eliware <eliware@eliware.org>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eliware/openai.git"
+  },
+  "homepage": "https://github.com/eliware/openai#readme",
+  "bugs": {
+    "url": "https://github.com/eliware/openai/issues"
+  },
   "eliware": {
     "id": "E-240",
     "apply": [
       "general",
       "library",
       "npm-published"
-    ],
-    "authority": {
-      "authoritativeFor": [
-        "OpenAI SDK wrapper behavior, public exports, declarations, and supported pricing calculations."
-      ],
-      "notAuthoritativeFor": [
-        "OpenAI service behavior or pricing policy, Eliware-wide conventions, or release authorization."
-      ]
-    },
-    "crosslinks": [
-      {
-        "path": "../docs/authority-map.json",
-        "relation": "relatedAuthority",
-        "authoritativeFor": "Cross-repository ownership and authority boundaries."
-      },
-      {
-        "path": "../conventions/specs/README.md",
-        "relation": "dependsOn",
-        "authoritativeFor": "Applicable Eliware repository and package conventions."
-      },
-      {
-        "path": "../operations/authority-map.json",
-        "relation": "relatedAuthority",
-        "authoritativeFor": "Release authorization and publication handoffs."
-      }
     ]
   },
-  "dependencies": {
-    "openai": "^7.23.0",
-    "ws": "^8.21.3"
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.mjs",
+      "types": "./src/index.d.ts"
+    }
   }
 }

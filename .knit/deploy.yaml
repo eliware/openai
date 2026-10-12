@@ -4,6 +4,7 @@ on:
     deployments:
       - target: dev
         cwd: /eliware/openai
+        timeoutMs: 300000
         commands:
           - git pull --ff-only origin main
           - npm ci

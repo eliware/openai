@@ -1,0 +1,9 @@
+version: 12.0.0
+title: Explicit non-goals
+status: active
+exclusions:
+  - The package does not execute tools, persist tool state, or provide
+    hosted-tool or modality-specific billing.
+  - Azure-specific construction is not supported.
+  - Implicit WebSocket reconnect, browser-native WebSocket constructors, and the
+    responses-ws alias are not supported.
