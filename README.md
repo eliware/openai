@@ -23,9 +23,9 @@ A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.
 
 ## Features
 
-- Use HTTP or select the Responses WebSocket transport.
-- Read normalized events and typed response errors.
-- Estimate token costs for GPT-5.6, GPT-6, and GPT-6.1 models.
+- Use HTTP by default or select the Responses WebSocket transport.
+- Read typed events and `ResponsesError` details.
+- Estimate standard text-token costs for supported GPT-5.6 and GPT-6 models.
 
 ## Requirements
 
@@ -33,9 +33,7 @@ Use Node.js 26 or later. Set an OpenAI API key for authenticated requests.
 
 ## Setup
 
-Install the package with `npm install @eliware/openai`. Version 12.0.0 needs an authorized release before you can install it.
-
-Set `OPENAI_API_KEY` or pass `apiKey` to `createOpenAI()`. See [configuration](docs/configuration.md).
+Install the published package with `npm install @eliware/openai`. Set `OPENAI_API_KEY` or pass `apiKey` to `createOpenAI()`. See [configuration](docs/configuration.md).
 
 ## Usage
 
@@ -47,41 +45,39 @@ const response = await openai.responses.create({ model: "gpt-6-luna", input: "He
 console.log(response.output_text);
 ```
 
-HTTP is the default transport. Set `transport: "websocket"` to select WebSocket. See [transport guidance](docs/transports.md).
+HTTP is the default. Set `transport: "websocket"` to use WebSocket. See the [transport guide](docs/transports.md) and [documentation index](docs/README.md).
 
-The pricing API estimates standard text-token costs. It does not calculate a complete invoice. See [pricing](docs/pricing.md).
-
-Read the [release notes](RELEASE_NOTES.md) for version details.
+See [pricing](docs/pricing.md) for cost estimates. Read [release notes](RELEASE_NOTES.md) for user changes. See [specifications](specs/README.md) for package contracts.
 
 ## Development
 
-Read [AGENTS.md](AGENTS.md), [user documentation](docs/README.md), and [specifications](specs/README.md) before you change the package. Run `npm ci` to install locked dependencies.
+Read [contributor rules](AGENTS.md), [user docs](docs/README.md), and [specifications](specs/README.md) before you edit. Run `npm ci` to install locked dependencies.
 
 ## Testing
 
-Run `npm test` for the full validation. Run `npm run typecheck` to check public declarations.
+Run `npm test` for package checks. Run `npm run typecheck` to check TypeScript declarations.
 
 ## Troubleshooting
 
-- Set `OPENAI_API_KEY` or pass `apiKey` when client creation fails for a missing key.
-- Await `responses.close()` when you use the WebSocket transport.
-- Review the pricing exclusions when costs differ from a provider invoice.
+- Set `OPENAI_API_KEY` or pass `apiKey` if client setup reports a missing key.
+- Await `responses.close()` after you use the WebSocket transport.
+- See [troubleshooting](docs/troubleshooting.md) for error details.
 
 ## Security
 
-Keep API keys and endpoint credentials private. Use environment variables or a secret manager. Never commit `.env` or log credentials.
+Keep API keys and endpoint credentials private. Use environment variables or a secret manager. Do not commit `.env` or log credentials.
 
 ## API
 
-Import the package root to use `createOpenAI`, pricing functions, transport adapters, and public types. See [API declarations](src/index.d.ts).
+Import from the package root. See the [API guide](docs/api.md) and [type declarations](src/index.d.ts).
 
 ## Packaging
 
-The package includes its runtime modules, declarations, examples, documentation, and specifications. The publication workflow checks the tag and uses npm provenance. Publication still needs the Operations release handoff.
+The package includes runtime modules, declarations, examples, docs, and specifications. The publish workflow checks the tag and uses npm provenance. Release approval follows Eliware Operations.
 
 ## Examples
 
-See [examples/README.md](examples/README.md) for runnable examples and prerequisites. Start with the [basic example](examples/basic/README.md).
+See [examples](examples/README.md) for commands and expected results. Start with the [basic guide](examples/basic/README.md).
 
 ## Support
 

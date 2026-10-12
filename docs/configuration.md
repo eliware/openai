@@ -1,9 +1,41 @@
 # Configuration
 
-Provide `OPENAI_API_KEY` through the process environment or pass `apiKey` to
-`createOpenAI()`. Other official SDK options are passed through unchanged.
-Use `WebSocketImpl` and `url` only when configuring the WebSocket transport for
-tests or an alternate runtime.
+## API key
 
-Never commit credentials or private endpoints. Start from `.env.example` and
-keep local values in an ignored `.env` file or a secret manager.
+Set `OPENAI_API_KEY` in the process environment or pass `apiKey` to `createOpenAI()`. The client needs a non-empty API key.
+
+```js
+import { createOpenAI } from "@eliware/openai";
+
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+```
+
+You can also pass the API key as a string:
+
+```js
+const openai = createOpenAI(process.env.OPENAI_API_KEY);
+```
+
+## SDK options
+
+Pass official OpenAI SDK options in the object form. The package passes those options to the SDK.
+
+```js
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 30_000,
+  maxRetries: 2,
+});
+```
+
+See the [OpenAI SDK docs](https://github.com/openai/openai-node) for SDK options.
+
+## WebSocket options
+
+Set `transport: "websocket"` to select the Responses WebSocket transport. You can set `WebSocketImpl` to a Node-compatible WebSocket constructor and `url` to a WebSocket endpoint.
+
+Use `WebSocketImpl` and `url` for tests or an alternate runtime. See [transport details](transports.md).
+
+## Keep keys private
+
+Keep API keys and private endpoints out of source control. Store local values in an ignored `.env` file or a secret manager. Use `.env.example` only for safe placeholders.
