@@ -1,6 +1,10 @@
 import { getResponsesWebSocketResource } from "../transports/responses-websocket.mjs";
 import { defaultSocket } from "./socket/factory.mjs";
-import { prepareClient, consumeClientConfiguration } from "./socket/configuration.mjs";
+import {
+  prepareClient,
+  readClientConfiguration,
+  consumeClientConfiguration,
+} from "./socket/configuration.mjs";
 
 const ResponsesWS = getResponsesWebSocketResource();
 
@@ -18,8 +22,9 @@ export class InjectableResponsesWS extends ResponsesWS {
   // `{ headers }`; browser-native `(url, protocols)` constructors are not
   // supported because they cannot receive the required authorization header.
   _createSocket(url, authHeaders) {
-    const customURL = this._customURL;
-    const Impl = this._customWebSocket;
+    const pending = readClientConfiguration(this._client);
+    const customURL = this._customURL ?? pending.url;
+    const Impl = this._customWebSocket ?? pending.implementation;
     if (!Impl && !customURL) return super._createSocket(url, authHeaders);
     return defaultSocket(Impl, customURL ?? url, authHeaders);
   }

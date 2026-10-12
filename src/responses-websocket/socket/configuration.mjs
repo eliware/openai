@@ -6,6 +6,12 @@ export function prepareClient(client, url, implementation) {
   if (implementation) pendingImplementations.set(client, implementation);
   return client;
 }
+export function readClientConfiguration(client) {
+  return {
+    url: pendingURLs.get(client),
+    implementation: pendingImplementations.get(client),
+  };
+}
 export function consumeClientConfiguration(client) {
   const configuration = {
     url: pendingURLs.get(client),

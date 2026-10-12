@@ -4,6 +4,7 @@ status: active
 requirements:
   - "HTTP remains the default transport; WebSocket transport is selected with
     transport: websocket."
+  - Apply custom WebSocket URLs and constructors to the initial connection.
   - A WebSocket client accepts one in-flight response request and rejects
     concurrent requests explicitly.
   - WebSocket reconnect is not performed; interruption fails the active request
