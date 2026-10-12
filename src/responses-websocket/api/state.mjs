@@ -2,7 +2,6 @@ export function initializeState(adapter, httpResponses) {
   adapter.httpResponses = httpResponses;
   adapter.inputItems = httpResponses?.inputItems;
   adapter.inputTokens = httpResponses?.inputTokens;
-  adapter._readyPromise = null;
   adapter._closePromise = null;
   adapter._closed = false;
   adapter._activeStreams = new Set();

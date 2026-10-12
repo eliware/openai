@@ -31,7 +31,10 @@ export function processEvent(event, callbacks, control = createRequestControlSta
     if (message.type === "response.failed")
       return {
         message,
-        error: new ResponsesError(message.error?.message ?? "Response failed", { event: message }),
+        error: new ResponsesError(message.error?.message ?? "Response failed", {
+          event: message,
+          cause: message.error,
+        }),
       };
     if (message.type === "response.incomplete")
       return {

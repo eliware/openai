@@ -70,3 +70,44 @@ test("returns the readiness iterator after failure", async () => {
     }),
   ).rejects.toThrow("Responses WebSocket error");
 });
+
+test("aborts a pending stream readiness wait", async () => {
+  let returned = false;
+  const controller = new AbortController();
+  const adapter = {
+    isOpen: () => false,
+    socket: {
+      stream: () => ({
+        next: () => new Promise(() => {}),
+        async return() {
+          returned = true;
+        },
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+      }),
+    },
+  };
+  const pending = waitForStream(adapter, controller.signal);
+  controller.abort();
+  await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+  expect(returned).toBe(true);
+});
+
+test("handles a pre-aborted signal and a ready event with a signal", async () => {
+  const adapter = {
+    isOpen: () => false,
+    socket: {
+      async *stream() {
+        yield { type: "open" };
+      },
+    },
+  };
+  const controller = new AbortController();
+  controller.abort();
+  await expect(waitForStream(adapter, controller.signal)).rejects.toMatchObject({
+    name: "AbortError",
+  });
+  const active = new AbortController();
+  await expect(waitForStream(adapter, active.signal)).resolves.toBeUndefined();
+});

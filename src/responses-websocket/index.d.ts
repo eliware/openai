@@ -38,7 +38,7 @@ export interface ResponsesWebSocketClientAPI {
   delete(...args: unknown[]): Promise<unknown>;
   cancel(...args: unknown[]): Promise<unknown>;
   parse(...args: unknown[]): Promise<unknown>;
-  ready(): Promise<void>;
+  ready(signal?: AbortSignal): Promise<void>;
   isOpen(): boolean;
   readonly state: "connecting" | "open" | "closing" | "closed";
   close(options?: { code?: number; reason?: string; timeout?: number }): Promise<void>;

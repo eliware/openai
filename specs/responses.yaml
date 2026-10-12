@@ -9,8 +9,8 @@ requirements:
     concurrent requests explicitly.
   - WebSocket reconnect is not performed; interruption fails the active request
     rather than replaying it.
-  - Abort signals settle active requests deterministically, and close is
-    awaitable and bounded.
+  - Abort signals settle active requests and readiness waits independently;
+    close is awaitable and bounded.
   - Protocol events preserve raw event data and available response and request
     identifiers; terminal failures reject with ResponsesError.
   - Browser-native WebSocket constructors and the responses-ws alias are

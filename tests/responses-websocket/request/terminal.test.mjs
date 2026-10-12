@@ -5,12 +5,25 @@ test("processes terminal protocol events", () => {
     processEvent({ type: "message", message: { type: "response.completed", response: {} } }, {})
       .done,
   ).toBe(true);
-  expect(
-    processEvent(
-      { type: "message", message: { type: "response.failed", error: { message: "bad" } } },
-      {},
-    ).error,
-  ).toBeTruthy();
+  const providerError = {
+    message: "bad",
+    code: "quota",
+    status: 429,
+    param: "model",
+    request_id: "req-1",
+  };
+  const failed = processEvent(
+    { type: "message", message: { type: "response.failed", error: providerError } },
+    {},
+  ).error;
+  expect(failed).toMatchObject({
+    message: "bad",
+    code: "quota",
+    status: 429,
+    parameter: "model",
+    requestId: "req-1",
+    cause: providerError,
+  });
   expect(
     processEvent(
       { type: "message", message: { type: "response.output_text.delta", delta: "x" } },

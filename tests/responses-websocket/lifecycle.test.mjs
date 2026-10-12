@@ -33,7 +33,7 @@ test("composes the public readiness, state, and shutdown methods", async () => {
   expect(adapter._closed).toBe(true);
 });
 
-test("shares pending readiness and waits for stream readiness without socket listeners", async () => {
+test("waits for stream readiness without socket listeners", async () => {
   const adapter = {
     socket: {
       socket: {},
@@ -43,11 +43,7 @@ test("shares pending readiness and waits for stream readiness without socket lis
     },
     isOpen: () => false,
   };
-  const first = ready(adapter);
-  const second = ready(adapter);
-  expect(second).toBe(first);
-  await expect(first).resolves.toBeUndefined();
-  expect(adapter._readyPromise).toBeNull();
+  await expect(ready(adapter)).resolves.toBeUndefined();
 });
 
 test("waits for socket open when an event-capable socket is connecting", async () => {
@@ -60,5 +56,25 @@ test("waits for socket open when an event-capable socket is connecting", async (
   const pending = ready(adapter);
   handlers.get("open")();
   await expect(pending).resolves.toBeUndefined();
-  expect(adapter._readyPromise).toBeNull();
+});
+
+test("aborts one concurrent readiness wait without cancelling another", async () => {
+  const handlers = new Map();
+  const socket = {
+    readyState: 0,
+    on: (name, listener) => handlers.set(name, [...(handlers.get(name) ?? []), listener]),
+    off: (name, listener) =>
+      handlers.set(
+        name,
+        (handlers.get(name) ?? []).filter((item) => item !== listener),
+      ),
+  };
+  const adapter = { socket: { socket }, isOpen: () => false };
+  const controller = new AbortController();
+  const cancelled = ready(adapter, controller.signal);
+  const waiting = ready(adapter);
+  controller.abort();
+  await expect(cancelled).rejects.toMatchObject({ name: "AbortError" });
+  for (const listener of handlers.get("open")) listener();
+  await expect(waiting).resolves.toBeUndefined();
 });
