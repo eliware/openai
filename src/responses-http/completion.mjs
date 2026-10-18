@@ -1,6 +1,6 @@
 import { normalizeEvent } from "../events/normalize.mjs";
 import { responsesErrorFrom } from "../errors/http-normalize.mjs";
-import { dispatch } from "./callback-dispatch.mjs";
+import { dispatch } from "./callback/dispatch.mjs";
 
 export function completeHTTP(result, handlers) {
   return Promise.resolve(result).then(

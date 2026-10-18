@@ -23,7 +23,7 @@ export function waitForSocket(socket, signal) {
     const onClose = (code, reason) => {
       cleanup();
       reject(
-        new ResponsesError("Responses WebSocket closed before becoming ready", {
+        new ResponsesError("Responses WebSocket closed before the socket opened", {
           event: { type: "close", code, reason },
         }),
       );

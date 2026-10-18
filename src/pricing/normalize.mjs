@@ -19,7 +19,7 @@ export function normalizeUsage(usage = {}) {
   const cacheWrite = usageCount(usage.input_tokens_details, "cache_write_tokens");
   const output = usageCount(usage, "output_tokens");
   if (cachedInput + cacheWrite > input) {
-    const error = new Error("Cached usage cannot exceed input usage");
+    const error = new Error("Cached usage must be no more than input usage");
     error.code = "INVALID_USAGE";
     throw error;
   }

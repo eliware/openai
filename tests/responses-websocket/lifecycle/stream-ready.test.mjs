@@ -33,10 +33,10 @@ test("accepts an already-open adapter and rejects stream failures", async () => 
         },
       },
     }),
-  ).rejects.toThrow("closed before becoming ready");
+  ).rejects.toThrow("closed before the socket opened");
   await expect(
     waitForStream({ isOpen: () => false, socket: { async *stream() {} } }),
-  ).rejects.toThrow("ended before becoming ready");
+  ).rejects.toThrow("ended before the socket opened");
 });
 
 test("returns the readiness iterator after failure", async () => {

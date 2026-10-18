@@ -18,7 +18,7 @@ const openai = createOpenAI(process.env.OPENAI_API_KEY);
 
 ## SDK options
 
-Pass official OpenAI SDK options in the object form. The package passes those options to the SDK.
+Pass official OpenAI SDK options as an object. The package sends those options to the SDK.
 
 ```js
 const openai = createOpenAI({
@@ -34,7 +34,7 @@ See the [OpenAI SDK docs](https://github.com/openai/openai-node) for SDK options
 
 Set `transport: "websocket"` to select the Responses WebSocket transport. You can set `WebSocketImpl` to a Node-compatible WebSocket constructor and `url` to a WebSocket endpoint.
 
-Use `WebSocketImpl` and `url` for tests or an alternate runtime. See [transport details](transports.md).
+Use `WebSocketImpl` and `url` for tests or a different runtime. See [transport details](transports.md).
 
 ## Keep keys private
 

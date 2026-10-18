@@ -46,7 +46,7 @@ test("uses the default socket error message", async () => {
 
 test("rejects immediately for closing sockets and aborted signals", async () => {
   await expect(waitForSocket({ readyState: 2, on() {}, off() {} })).rejects.toThrow(
-    "closed before becoming ready",
+    "closed before the socket opened",
   );
   const controller = new AbortController();
   controller.abort();

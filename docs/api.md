@@ -16,7 +16,7 @@ The HTTP client keeps the official SDK Responses methods. It adds `create`, `cre
 
 - Call `create(input, options)` for a response or an async event stream.
 - Set `input.stream` to `true` to make `create` return an async event stream.
-- Call `createWithEvents(input, handlers)` to get a response and receive callbacks.
+- Call `createWithEvents(input, handlers)` to receive a response and callbacks.
 - Set `input.stream` to `true` with `createWithEvents()` to consume events and resolve after the stream ends.
 - Call `events(input, options)` or `stream(input, options)` to read an async event stream.
 - Pass request options in `input`. Pass callbacks and an `AbortSignal` in `options`.
@@ -30,7 +30,7 @@ Each callback receives the event data first and a normalized event second. The n
 The WebSocket client adds `create`, `createWithEvents`, `events`, `stream`, `steer`, `continueResponse`, `ready`, `isOpen`, `state`, and `close`.
 
 - Call `create(input, options)` for a response or set `input.stream` to `true` for an async event stream.
-- Call `createWithEvents(input, handlers)` to get a response and receive callbacks.
+- Call `createWithEvents(input, handlers)` to receive a response and callbacks.
 - Set `input.stream` to `true` with `createWithEvents()` to consume events and resolve after the stream ends.
 - Call `events(input, options)` or `stream(input, options)` to read an async event stream.
 - Call `ready()` to wait for the socket to open. Check `isOpen()` or `state` to read its state.
@@ -44,8 +44,8 @@ One response request can run at a time on each WebSocket client. The client does
 
 - Call `getPricing(model)` to read a model's token rates.
 - Call `normalizeUsage(usage)` to validate and normalize Responses API usage.
-- Call `calculateUsageCost(model, usage)` to get an estimated USD amount.
-- Call `calculateUsageCostBreakdown(model, usage)` to get token counts and cost fields.
+- Call `calculateUsageCost(model, usage)` to calculate the estimated USD cost.
+- Call `calculateUsageCostBreakdown(model, usage)` to return token counts and cost fields.
 - Call `createPricingAccumulator()` to add requests and read totals with `summary()`.
 
 See the [pricing guide](pricing.md) for supported models, rates, and limits.

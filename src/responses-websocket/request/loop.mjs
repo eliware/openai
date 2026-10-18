@@ -2,7 +2,7 @@ import { ResponsesError } from "../../errors/responses-error.mjs";
 import { normalizeEvent } from "../../events/normalize.mjs";
 import { processEvent } from "./terminal.mjs";
 import { readRequestEvent } from "./read.mjs";
-import { createRequestControlState } from "./control-state.mjs";
+import { createRequestControlState } from "./control/state.mjs";
 
 export async function* readResponseEvents(
   next,
@@ -25,7 +25,7 @@ export async function* readResponseEvents(
     }
     if (outcome.message) yield outcome.message;
   }
-  const error = new ResponsesError("Responses WebSocket ended before completion", {
+  const error = new ResponsesError("Responses WebSocket ended before the final response", {
     event: { type: "end" },
   });
   callbacks.onError?.(error, normalizeEvent({ type: "end" }));

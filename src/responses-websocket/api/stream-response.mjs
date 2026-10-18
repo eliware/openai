@@ -1,4 +1,4 @@
-import { splitOptions } from "../../responses-http/callback-options.mjs";
+import { splitOptions } from "../../responses-http/callback/options.mjs";
 import { createResponse } from "./create-response.mjs";
 
 export function streamResponse(adapter, input = {}, options = {}) {

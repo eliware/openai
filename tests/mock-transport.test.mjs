@@ -1,6 +1,10 @@
+import { afterEach, beforeEach, jest } from "@jest/globals";
 import { createMockResponsesTransport } from "../src/mock-transport.mjs";
 
-const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
+
+const tick = () => jest.advanceTimersByTimeAsync(0);
 
 test("mock transport emits open, messages, and close", async () => {
   const Mock = createMockResponsesTransport([{ type: "test" }]);
@@ -30,7 +34,7 @@ test("supports delayed events, sent payloads, errors, reconnects, and listeners"
   socket.readyState = 1;
   socket.emit("open");
   socket.send(JSON.stringify({ type: "response.create" }));
-  await new Promise((resolve) => setTimeout(resolve, 5));
+  await jest.advanceTimersByTimeAsync(5);
   expect(socket.sent).toEqual([{ type: "response.create" }]);
   expect(seen).toEqual(["open", "response.output_text.delta"]);
   socket.error(new Error("boom"));
@@ -67,7 +71,7 @@ test("supports AgentX protocol scenario events", async () => {
   const seen = [];
   socket.on("message", (data) => seen.push(JSON.parse(data).type));
   socket.send("{}");
-  await new Promise((resolve) => setTimeout(resolve, 5));
+  await jest.advanceTimersByTimeAsync(5);
   expect(seen).toEqual(scenario.map((event) => event.type));
   socket.error();
   socket.close(1001, "done");
@@ -92,7 +96,7 @@ test("covers mock transport fallback branches and dynamic event factory", async 
   socket.emit("unused");
   socket.error();
   socket.error(new Error("explicit"));
-  await new Promise((resolve) => setTimeout(resolve, 2));
+  await jest.advanceTimersByTimeAsync(2);
   expect(generated[0][0]).toEqual({ type: "object" });
   expect(seen).toContain("generated");
   expect(seen).toContain("pushed");
@@ -114,7 +118,7 @@ test("covers mock defaults and once/off lifecycle", async () => {
   socket.once("open", () => {
     opens += 1;
   });
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await jest.advanceTimersByTimeAsync(0);
   expect(opens).toBe(1);
   expect(Mock.instances).toContain(socket);
   socket.on("unused", () => {}).off("unused", () => {});
@@ -134,7 +138,7 @@ test("cancels delayed queued messages during close", async () => {
   });
   socket.send("{}");
   socket.close();
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await jest.advanceTimersByTimeAsync(0);
   expect(socket.closed).toEqual({ code: 1000, reason: "OK" });
 });
 
@@ -145,7 +149,7 @@ test("drops a queued message when the socket closes before delivery", async () =
   socket.on("message", (value) => seen.push(value));
   socket.send("{}");
   socket.readyState = 3;
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await jest.advanceTimersByTimeAsync(0);
   expect(seen).toEqual([]);
 });
 

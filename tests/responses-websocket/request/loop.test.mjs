@@ -21,7 +21,7 @@ test("fails when the stream ends first", async () => {
   const values = [{ value: { type: "connecting" }, done: false }, { done: true }];
   await expect(
     collect(readResponseEvents(async () => values[index++], {}, {}, undefined)),
-  ).rejects.toThrow("ended before completion");
+  ).rejects.toThrow("ended before the final response");
 });
 test("yields ordinary messages and reports terminal errors", async () => {
   let index = 0;

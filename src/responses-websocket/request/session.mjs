@@ -2,7 +2,7 @@ import { ResponsesError } from "../../errors/responses-error.mjs";
 import { abortError } from "../../errors/abort.mjs";
 import { prepareRequest } from "./options.mjs";
 import { createAbortController } from "./abort.mjs";
-import { createRequestControlState } from "./control-state.mjs";
+import { createRequestControlState } from "./control/state.mjs";
 
 export function openRequest(adapter, response, options) {
   const { signal, callbacks } = prepareRequest(options);

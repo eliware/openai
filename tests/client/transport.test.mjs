@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
-import { WebSocketServer } from "ws";
 import { createServer } from "node:http";
+import { createMockResponsesTransport } from "../../src/mock-transport.mjs";
 import { attachTransport } from "../../src/client/transport.mjs";
 import { createOpenAI } from "../../src/client.mjs";
 
@@ -18,23 +18,20 @@ test("attaches the HTTP transport", () => {
 
 describe("client transport integration", () => {
   test("uses the real SDK WebSocket transport with a local server", async () => {
-    const server = new WebSocketServer({ port: 0 });
-    await new Promise((resolve) => server.once("listening", resolve));
-    server.on("connection", (socket) =>
-      socket.on("message", () =>
-        socket.send(
-          JSON.stringify({
-            type: "response.completed",
-            response: { id: "local-response", status: "completed" },
-          }),
-        ),
-      ),
-    );
-    const { port } = server.address();
+    const WebSocketImpl = createMockResponsesTransport([
+      {
+        type: "response.completed",
+        response: {
+          id: "local-response",
+          status: "completed",
+        },
+      },
+    ]);
     const client = createOpenAI({
       apiKey: "integration-key",
       transport: "websocket",
-      url: `ws://127.0.0.1:${port}`,
+      WebSocketImpl,
+      url: "ws://localhost",
     });
     try {
       await expect(client.responses.create({ model: "integration-model" })).resolves.toMatchObject({
@@ -42,7 +39,6 @@ describe("client transport integration", () => {
       });
     } finally {
       await client.responses.close();
-      await new Promise((resolve) => server.close(resolve));
     }
   }, 10_000);
 

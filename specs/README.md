@@ -7,3 +7,4 @@
 - [Pricing contract](pricing.yaml)
 - [Change requirements](requirements.yaml)
 - [Responses transport contract](responses.yaml)
+- [Workflow files](workflows/README.md)

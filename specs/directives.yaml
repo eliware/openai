@@ -1,4 +1,4 @@
-version: "12.0"
+version: "13.0"
 description: Defines local rules for the OpenAI wrapper repository.
 directives:
   - id: E-220.0
@@ -6,5 +6,5 @@ directives:
       - Apply general, library, and npm-published conventions from Eliware.
       - Keep the public API, declarations, examples, and documentation in sync.
     donts:
-      - Do not define OpenAI service behavior or Eliware release authorization.
+      - Do not define OpenAI API behavior or Eliware release authorization.
       - Do not add legacy aliases or undocumented fallback behavior.

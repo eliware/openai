@@ -6,7 +6,7 @@ The package uses HTTP by default. Set `transport: "websocket"` to use the Respon
 
 The HTTP client uses the official SDK Responses API. It adds `createWithEvents()`, `events()`, and `stream()` helpers. It supports request callbacks and abort signals.
 
-Use HTTP for ordinary requests or when you do not need a persistent socket.
+Use HTTP for ordinary requests without a continuous socket.
 
 ## WebSocket
 
@@ -14,7 +14,7 @@ The WebSocket client supports response events, callbacks, abort signals, and lif
 
 Each client accepts one active response request. A concurrent request fails with `ResponsesError`. The client does not reconnect or replay a request after a connection failure.
 
-The package requires a Node-compatible WebSocket constructor. It does not support the browser-native constructor. Pass `WebSocketImpl` when you need a custom constructor. Set `url` only for a custom endpoint or test.
+The package requires a Node-compatible WebSocket constructor. It does not support the browser-native constructor. Pass `WebSocketImpl` when a custom constructor is necessary. Set `url` only for a custom endpoint or test.
 
 ## Events
 

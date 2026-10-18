@@ -16,11 +16,10 @@ export class InjectableResponsesWS extends ResponsesWS {
     this._customWebSocket = prepared.implementation ?? options.WebSocketImpl;
     this._customURL = prepared.url ?? options.url;
   }
-  // Intentional 2.0 runtime contract: injected sockets are Node-style and
-  // receive `{ headers }`; browser-native constructors are not supported.
-  // Intentional public contract: WebSocketImpl is Node-style and receives
-  // `{ headers }`; browser-native `(url, protocols)` constructors are not
-  // supported because they cannot receive the required authorization header.
+  // Injected sockets use the 2.0 runtime contract. They use Node-style options.
+  // The options include `{ headers }`. The browser constructor is unsupported.
+  // The public contract also requires Node-style options for `WebSocketImpl`.
+  // Browser constructors cannot receive the required authorization header.
   _createSocket(url, authHeaders) {
     const pending = readClientConfiguration(this._client);
     const customURL = this._customURL ?? pending.url;

@@ -1,4 +1,4 @@
-import { dispatch } from "../../responses-http/callback-dispatch.mjs";
+import { dispatch } from "../../responses-http/callback/dispatch.mjs";
 import { requestEvents } from "../request.mjs";
 export function responseEvents(adapter, response = {}, options = {}) {
   return requestEvents(adapter, response, options);

@@ -1,9 +1,9 @@
 import { ResponsesError } from "../../errors/responses-error.mjs";
 import { responsesWebSocketError } from "../../errors/websocket-normalize.mjs";
 import { normalizeEvent } from "../../events/normalize.mjs";
-import { dispatch } from "../../responses-http/callback-dispatch.mjs";
-import { hasPendingSteer, observeControlEvent } from "./control-events.mjs";
-import { createRequestControlState } from "./control-state.mjs";
+import { dispatch } from "../../responses-http/callback/dispatch.mjs";
+import { hasPendingSteer, observeControlEvent } from "./control/events.mjs";
+import { createRequestControlState } from "./control/state.mjs";
 
 export function processEvent(event, callbacks, control = createRequestControlState()) {
   if (event.type === "message") {
@@ -66,7 +66,7 @@ export function processEvent(event, callbacks, control = createRequestControlSta
     return {
       error: responsesWebSocketError(
         normalizeEvent(event, event),
-        "Responses WebSocket closed before completion",
+        "Responses WebSocket closed before the final response",
       ),
     };
   return {};

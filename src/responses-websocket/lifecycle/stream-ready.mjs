@@ -27,11 +27,11 @@ export async function waitForStream(adapter, signal) {
           cause: value.error,
         });
       if (value.type === "close")
-        throw new ResponsesError("Responses WebSocket closed before becoming ready", {
+        throw new ResponsesError("Responses WebSocket closed before the socket opened", {
           event: value,
         });
     }
-    throw new ResponsesError("Responses WebSocket ended before becoming ready");
+    throw new ResponsesError("Responses WebSocket ended before the socket opened");
   } finally {
     await events.return?.();
   }

@@ -1,7 +1,7 @@
 import { addListener, removeListener, emit } from "./listeners.mjs";
-import { initializeSocket } from "./socket-state.mjs";
-import { sendMessage, pushMessages } from "./socket-messages.mjs";
-import { closeSocket } from "./socket-lifecycle.mjs";
+import { initializeSocket } from "./socket/state.mjs";
+import { sendMessage, pushMessages } from "./socket/messages.mjs";
+import { closeSocket } from "./socket/lifecycle.mjs";
 
 export function createMockSocketClass(events, options) {
   const defaults = { autoOpen: true, delay: 0, ...options };

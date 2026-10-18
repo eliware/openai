@@ -1,4 +1,4 @@
-version: 12.0.0
+version: 13.0.0
 title: OpenAI wrapper public contract
 status: active
 summary: A native ESM Node.js wrapper around the official OpenAI SDK with HTTP

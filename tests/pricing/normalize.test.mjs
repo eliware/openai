@@ -20,5 +20,5 @@ test("rejects invalid and contradictory usage", () => {
       input_tokens: 1,
       input_tokens_details: { cached_tokens: 1, cache_write_tokens: 1 },
     }),
-  ).toThrow("exceed");
+  ).toThrow("no more than");
 });

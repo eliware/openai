@@ -85,10 +85,11 @@ test("is idempotent and supports adapters without a socket close method", async 
 });
 
 test("clears a rejected close promise for retry", async () => {
+  jest.useFakeTimers();
   const socket = {
     readyState: 1,
     once: (name, fn) => {
-      if (name === "error") setImmediate(() => fn(new Error("broken")));
+      if (name === "error") fn(new Error("broken"));
     },
     off() {},
   };
@@ -100,6 +101,7 @@ test("clears a rejected close promise for retry", async () => {
   };
   await expect(close(adapter)).rejects.toThrow("broken");
   expect(adapter._closePromise).toBeNull();
+  jest.useRealTimers();
 });
 
 test("returns a promise when close follows a successful close", async () => {

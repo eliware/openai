@@ -1,4 +1,4 @@
-// Standard API text-token rates, in USD per 1M tokens. Service-tier premiums,
+// Standard API text-token rates, in USD for each 1M tokens. Tier premiums,
 // hosted-tool call fees, batch discounts, and modality-specific fees are not
 // represented by this catalog.
 export const API_PRICING = Object.freeze({
