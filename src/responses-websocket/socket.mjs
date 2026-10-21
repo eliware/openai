@@ -1,10 +1,9 @@
 import { getResponsesWebSocketResource } from "../transports/responses-websocket.mjs";
-import { defaultSocket } from "./socket/factory.mjs";
+import { createSocketConnection } from "./socket/connection.mjs";
 import {
   prepareSocketConfiguration,
   consumeSocketConfiguration,
 } from "./socket/configuration/handoff.mjs";
-import { resolveSocketConfiguration } from "./socket/configuration/resolution.mjs";
 
 const ResponsesWS = getResponsesWebSocketResource();
 
@@ -21,12 +20,12 @@ export class InjectableResponsesWS extends ResponsesWS {
   // The public contract also requires Node-style options for `WebSocketImpl`.
   // Browser constructors cannot receive the required authorization header.
   _createSocket(url, authHeaders) {
-    const configuration = resolveSocketConfiguration(this._client, {
-      url: this._customURL,
-      implementation: this._customWebSocket,
-    });
-    if (!configuration.implementation && !configuration.url)
-      return super._createSocket(url, authHeaders);
-    return defaultSocket(configuration.implementation, configuration.url ?? url, authHeaders);
+    return createSocketConnection(
+      this._client,
+      { url: this._customURL, implementation: this._customWebSocket },
+      url,
+      authHeaders,
+      () => super._createSocket(url, authHeaders),
+    );
   }
 }

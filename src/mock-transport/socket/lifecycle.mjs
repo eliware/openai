@@ -1,5 +1,9 @@
 import { cancelTimers } from "../scheduler.mjs";
 
+export function scheduleSocketOpen(socket) {
+  queueMicrotask(() => socket.emit("open"));
+}
+
 export function emitSocketError(socket, error) {
   socket.emit("error", error);
   return socket;
