@@ -1,4 +1,4 @@
-version: "13.0"
+version: "14.0"
 repositoryId: eliware/openai
 globalAuthorityMap: ../../docs/authority-map.json
 description: Local authority for the OpenAI wrapper's implementation contract

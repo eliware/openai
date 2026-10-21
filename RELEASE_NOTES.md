@@ -1,11 +1,12 @@
 # Release Notes
 
-## 13.0.0 — 2026-10-17
+## 14.0.0 — 2026-10-21
 
 ### Changed
 
 - Update the OpenAI SDK to its latest release.
-- Align package metadata and specifications with Eliware Convention 13.0.
+- Align package metadata and specifications with Eliware Convention 14.0.
+- Update Eliware Test to its latest release.
 - Organize helper modules and tests in matching folders.
 - Use the canonical npm workflow and the required Knit command sequence.
 
