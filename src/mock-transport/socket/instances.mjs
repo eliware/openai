@@ -1,4 +1,10 @@
-export function registerInstance(MockSocket, socket) {
-  MockSocket.instances.push(socket);
-  return socket;
+export function createInstanceRegistry() {
+  const instances = [];
+  return {
+    instances,
+    register(socket) {
+      instances.push(socket);
+      return socket;
+    },
+  };
 }

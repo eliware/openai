@@ -1,4 +1,4 @@
-import { validateUsage } from "./usage/validation.mjs";
+import { validateUsage } from "./validation.mjs";
 
 export function normalizeUsage(usage = {}) {
   validateUsage(usage);

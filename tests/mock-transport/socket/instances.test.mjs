@@ -1,8 +1,8 @@
-import { registerInstance } from "../../../src/mock-transport/socket/instances.mjs";
+import { createInstanceRegistry } from "../../../src/mock-transport/socket/instances.mjs";
 
-test("registers a socket instance with its mock class", () => {
-  const MockSocket = { instances: [] };
+test("registers socket instances in its collection", () => {
+  const registry = createInstanceRegistry();
   const socket = {};
-  expect(registerInstance(MockSocket, socket)).toBe(socket);
-  expect(MockSocket.instances).toEqual([socket]);
+  expect(registry.register(socket)).toBe(socket);
+  expect(registry.instances).toEqual([socket]);
 });

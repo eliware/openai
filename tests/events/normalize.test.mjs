@@ -17,3 +17,13 @@ test("handles primitive, wrapped, and nested metadata", () => {
     requestId: "z",
   });
 });
+
+test("preserves top-level request IDs when errors also contain request IDs", () => {
+  expect(
+    normalizeEvent({
+      type: "error",
+      request_id: "top-level",
+      error: { request_id: "nested" },
+    }),
+  ).toMatchObject({ requestId: "top-level", error: { request_id: "nested" } });
+});

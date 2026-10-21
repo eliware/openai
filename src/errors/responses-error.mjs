@@ -1,4 +1,4 @@
-import { eventErrorDetails } from "../events/error-details.mjs";
+import { eventErrorDetails } from "../events/error/details.mjs";
 export class ResponsesError extends Error {
   constructor(message, { event, cause } = {}) {
     super(message, { cause });

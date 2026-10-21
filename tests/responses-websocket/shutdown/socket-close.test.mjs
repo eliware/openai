@@ -65,6 +65,15 @@ test("completes sockets without event APIs and handles close failures", () => {
   expect(results[1].message).toBe("fail");
 });
 
+test("waits for sockets with close event APIs", () => {
+  const socket = { readyState: 1, once() {}, off() {} };
+  const completed = jest.fn();
+
+  closeSocket({ socket: { close() {} } }, socket, {}, 10, completed);
+
+  expect(completed).not.toHaveBeenCalled();
+});
+
 test("ignores duplicate socket completion events", () => {
   let onClose;
   let onError;

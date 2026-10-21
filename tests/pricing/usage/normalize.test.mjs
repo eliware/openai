@@ -1,4 +1,5 @@
-import { normalizeUsage } from "../../src/pricing/normalize.mjs";
+import { normalizeUsage } from "../../../src/pricing/usage/normalize.mjs";
+
 test("normalizes Responses usage", () => {
   expect(
     normalizeUsage({
@@ -8,6 +9,12 @@ test("normalizes Responses usage", () => {
     }),
   ).toEqual({ input: 2, cachedInput: 1, cacheWrite: 0, output: 3 });
 });
+
 test("normalizes omitted fields to zero", () => {
   expect(normalizeUsage()).toEqual({ input: 0, cachedInput: 0, cacheWrite: 0, output: 0 });
+});
+
+test("validates usage before normalization", () => {
+  expect(() => normalizeUsage(null)).toThrow("Usage must be an object");
+  expect(() => normalizeUsage({ input_tokens: -1 })).toThrow("Invalid usage field: input_tokens");
 });

@@ -1,4 +1,5 @@
 import { watchSocketClose } from "./close/watch.mjs";
+import { shouldCompleteSocketClose } from "./close/should-complete.mjs";
 
 export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
   if (!socket || socket.readyState === 3 || typeof adapter.socket.close !== "function") {
@@ -8,12 +9,7 @@ export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
   const done = watchSocketClose(socket, timeout, onComplete);
   try {
     adapter.socket.close(socketProps);
-    if (
-      socket.readyState === 3 ||
-      socket.socket?.closed === true ||
-      (!socket.once && !socket.addEventListener)
-    )
-      done();
+    if (shouldCompleteSocketClose(socket)) done();
   } catch (error) {
     done(error);
   }
