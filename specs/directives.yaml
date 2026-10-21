@@ -1,4 +1,4 @@
-version: "14.0"
+version: "15.0"
 description: Defines local rules for the OpenAI wrapper repository.
 directives:
   - id: E-220.0
