@@ -1,23 +1,14 @@
-import { watchCloseEvents } from "./events.mjs";
-import { startCloseTimeout } from "./timeout.mjs";
+import { watchCloseResources } from "./watch-resources.mjs";
 
 export function watchSocketClose(socket, timeout, onComplete) {
   let settled = false;
-  let clearCloseTimeout;
-  let clearCloseEvents = () => {};
-  const cleanup = () => {
-    clearCloseTimeout?.();
-    clearCloseEvents();
-  };
+  let clearResources = () => {};
   const done = (error) => {
     if (settled) return;
     settled = true;
-    cleanup();
+    clearResources();
     onComplete(error);
   };
-  const onClose = () => done();
-  const onError = (error) => done(error);
-  clearCloseTimeout = startCloseTimeout(socket, timeout, done);
-  clearCloseEvents = watchCloseEvents(socket, onClose, onError);
+  clearResources = watchCloseResources(socket, timeout, done);
   return done;
 }

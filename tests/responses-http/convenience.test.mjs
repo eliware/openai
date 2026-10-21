@@ -16,11 +16,26 @@ test("creates convenience HTTP methods", async () => {
   expect(values).toHaveLength(1);
   expect(adapter.create).toHaveBeenCalled();
   expect(responses.stream).toHaveBeenCalled();
+});
+test("uses empty defaults when convenience methods receive no arguments", async () => {
+  const adapter = { create: jest.fn().mockResolvedValue(undefined) };
+  const responses = {
+    stream: jest.fn().mockImplementation(async function* () {
+      yield { type: "x" };
+    }),
+  };
+  const methods = createHTTPConvenience(adapter, responses);
+
   await methods.createWithEvents();
   methods.events();
-  const defaultStream = [];
-  for await (const value of methods.stream()) defaultStream.push(value);
-  expect(defaultStream).toHaveLength(1);
+  const values = [];
+  for await (const value of methods.stream()) values.push(value);
+
+  expect(adapter.create).toHaveBeenNthCalledWith(1, {}, {});
+  expect(adapter.create).toHaveBeenNthCalledWith(2, { stream: true }, {});
+  expect(values).toHaveLength(1);
+  expect(values[0]).toMatchObject({ type: "x" });
+  expect(responses.stream).toHaveBeenCalledWith({}, {});
 });
 test("convenience events opts into streaming and createWithEvents consumes it", async () => {
   const create = jest.fn().mockImplementation(async function* () {
