@@ -4,7 +4,7 @@ import {
   prepareSocketConfiguration,
   consumeSocketConfiguration,
 } from "./socket/configuration/handoff.mjs";
-import { resolveSocketConfiguration } from "./socket/configuration/resolve.mjs";
+import { resolveSocketConfiguration } from "./socket/configuration/resolution.mjs";
 
 const ResponsesWS = getResponsesWebSocketResource();
 

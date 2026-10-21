@@ -1,11 +1,9 @@
-import { scheduleEvents } from "../scheduler.mjs";
-import { selectEvents } from "./event-selection.mjs";
 import { recordPayload } from "./payload.mjs";
+import { deliverMessages } from "./delivery.mjs";
 
 export function sendMessage(socket, data, defaults) {
   recordPayload(socket, data);
-  const batch = selectEvents(socket, data, defaults);
-  scheduleEvents(socket, batch, defaults.delay, socket.emit.bind(socket));
+  deliverMessages(socket, data, defaults);
   return socket;
 }
 export function pushMessages(socket, messages) {

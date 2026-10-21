@@ -8,3 +8,7 @@ test("extracts error metadata", () => {
     requestId: "q",
   });
 });
+
+test("extracts details from a direct error event", () => {
+  expect(eventErrorDetails({ type: "error", code: "x" })).toMatchObject({ code: "x" });
+});

@@ -1,7 +1,9 @@
 import { ResponsesError } from "../../src/errors/responses-error.mjs";
 test("constructs a normalized response error", () => {
-  expect(new ResponsesError("bad", { event: { code: "x", type: "error" } })).toMatchObject({
+  const cause = new Error("source");
+  expect(new ResponsesError("bad", { event: { type: "error" }, cause })).toMatchObject({
     name: "ResponsesError",
-    code: "x",
+    message: "bad",
+    cause,
   });
 });
