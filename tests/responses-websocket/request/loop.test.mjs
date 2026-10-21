@@ -95,13 +95,6 @@ test("handles terminal errors without an error callback", async () => {
 
 test.each([
   [{ type: "response.failed", error: { message: "provider rejected" } }, "provider rejected"],
-  [
-    {
-      type: "response.incomplete",
-      response: { incomplete_details: { reason: "max_output_tokens" } },
-    },
-    "max_output_tokens",
-  ],
 ])("notifies onError exactly once for %s terminal protocol events", async (message, reason) => {
   const onEvents = [];
   const onErrors = [];
@@ -126,6 +119,41 @@ test.each([
   expect(onErrors).toHaveLength(1);
   expect(onErrors[0].error).toMatchObject({ name: "ResponsesError", message: reason });
   expect(onErrors[0].event).toMatchObject({ type: message.type });
+});
+
+test("yields incomplete responses and stops without reporting an error", async () => {
+  let calls = 0;
+  const onError = jest.fn();
+  const incomplete = {
+    type: "response.incomplete",
+    response: {
+      id: "r1",
+      status: "incomplete",
+      incomplete_details: { reason: "max_output_tokens" },
+    },
+  };
+  const values = [
+    { value: { type: "message", message: incomplete }, done: false },
+    {
+      value: { type: "message", message: { type: "response.completed", response: { id: "r2" } } },
+      done: false,
+    },
+  ];
+
+  await expect(
+    collect(
+      readResponseEvents(
+        async () => values[calls++],
+        { onError },
+        { wasAborted: () => false },
+        undefined,
+      ),
+    ),
+  ).resolves.toMatchObject([
+    { type: "response.incomplete", response: { id: "r1", status: "incomplete" } },
+  ]);
+  expect(calls).toBe(1);
+  expect(onError).not.toHaveBeenCalled();
 });
 test("keeps the iterator open through steered incomplete and successor completion", async () => {
   let index = 0;

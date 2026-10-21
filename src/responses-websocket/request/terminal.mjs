@@ -36,14 +36,7 @@ export function processEvent(event, callbacks, control = createRequestControlSta
           cause: message.error,
         }),
       };
-    if (message.type === "response.incomplete")
-      return {
-        message,
-        error: new ResponsesError(
-          message.response?.incomplete_details?.reason ?? "Response incomplete",
-          { event: message },
-        ),
-      };
+    if (message.type === "response.incomplete") return { message, done: true };
     return { message };
   }
   return processLifecycleEvent(event, callbacks);

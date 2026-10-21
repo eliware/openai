@@ -104,6 +104,8 @@ The client also provides these methods.
 | `close(options)`                               | Close the socket and return a promise.                                             |
 | `on(name, listener)` and `off(name, listener)` | Add or remove a socket event listener.                                             |
 
+When a response is incomplete, the event stream yields the `response.incomplete` event and then ends. A non-stream `create` call returns the incomplete response.
+
 One response request can run at a time on each WebSocket client.
 The client does not reconnect or replay a request after a connection failure.
 See [Transport details](transports.md) for socket behavior and steering examples.

@@ -13,5 +13,7 @@ requirements:
     close is awaitable and bounded.
   - Protocol events preserve raw event data and available response and request
     identifiers; terminal failures reject with ResponsesError.
+  - A response.incomplete event ends the stream and remains available to callers.
+  - A response.failed event rejects with ResponsesError.
   - Browser-native WebSocket constructors and the responses-ws alias are
     unsupported.

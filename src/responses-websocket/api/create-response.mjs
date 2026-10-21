@@ -9,7 +9,8 @@ export function createResponse(adapter, input = {}, options = {}) {
   return (async () => {
     let completed;
     for await (const event of iterator)
-      if (event.type === "response.completed") completed = event.response;
+      if (event.type === "response.completed" || event.type === "response.incomplete")
+        completed = event.response;
     return completed;
   })();
 }

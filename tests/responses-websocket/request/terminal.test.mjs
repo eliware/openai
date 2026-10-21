@@ -54,6 +54,12 @@ test("processes incomplete protocol events", () => {
     processEvent({ type: "message", message: { type: "response.failed" } }, {}).error,
   ).toBeTruthy();
   expect(
-    processEvent({ type: "message", message: { type: "response.incomplete" } }, {}).error,
-  ).toBeTruthy();
+    processEvent(
+      {
+        type: "message",
+        message: { type: "response.incomplete", response: { status: "incomplete" } },
+      },
+      {},
+    ),
+  ).toMatchObject({ done: true, message: { type: "response.incomplete" } });
 });
