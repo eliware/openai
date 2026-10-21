@@ -1,15 +1,14 @@
 import { jest } from "@jest/globals";
 import {
-  logRequestFailed,
   logRequestMessage,
   logRequestStarted,
   logRequestTransport,
 } from "../../../src/responses-websocket/request/logging.mjs";
 
-test("logs request start and failure with WebSocket context", () => {
+test("logs request start and transport events with WebSocket context", () => {
   const logger = { log: jest.fn() };
   logRequestStarted(logger);
-  logRequestFailed(logger, { name: "AbortError" });
+  logRequestTransport(logger, "open");
   expect(logger.log).toHaveBeenNthCalledWith(
     1,
     "debug",
@@ -18,8 +17,8 @@ test("logs request start and failure with WebSocket context", () => {
   );
   expect(logger.log).toHaveBeenNthCalledWith(
     2,
-    "warn",
-    "Responses request failed",
+    "silly",
+    "Responses transport event",
     expect.objectContaining({ transport: "websocket" }),
   );
 });

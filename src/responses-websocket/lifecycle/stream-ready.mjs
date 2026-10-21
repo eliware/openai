@@ -1,23 +1,13 @@
 import { ResponsesError } from "../../errors/responses-error.mjs";
 import { abortError } from "../../errors/abort.mjs";
+import { waitForNextEvent } from "./next-event.mjs";
 
 export async function waitForStream(adapter, signal) {
   const events = adapter.socket.stream();
   try {
     while (true) {
       if (signal?.aborted) throw abortError(signal);
-      const pending = events.next();
-      const event = signal
-        ? await Promise.race([
-            pending,
-            new Promise((_, reject) => {
-              const onAbort = () => reject(abortError(signal));
-              signal.addEventListener("abort", onAbort, { once: true });
-              const cleanup = () => signal.removeEventListener("abort", onAbort);
-              pending.then(cleanup, cleanup);
-            }),
-          ])
-        : await pending;
+      const event = await waitForNextEvent(events, signal);
       if (event.done) break;
       const value = event.value;
       if (value.type === "open" || adapter.isOpen()) return;

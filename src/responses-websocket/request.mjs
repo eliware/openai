@@ -4,7 +4,8 @@ import { cleanupRequest } from "./request/cleanup.mjs";
 import { sendRequest } from "./request/send.mjs";
 import { ensureReady } from "./request/ready.mjs";
 import { readResponseEvents } from "./request/loop.mjs";
-import { logRequestStarted, logRequestFailed } from "./request/logging.mjs";
+import { logRequestStarted } from "./request/logging.mjs";
+import { logRequestError } from "./request/error.mjs";
 
 export async function* requestEvents(adapter, response, options = {}) {
   logRequestStarted(adapter.logger);
@@ -22,7 +23,7 @@ export async function* requestEvents(adapter, response, options = {}) {
     sendRequest(adapter, response, callbacks);
     yield* readResponseEvents(next, callbacks, controller, signal, control, adapter.logger);
   } catch (error) {
-    logRequestFailed(adapter.logger, error);
+    logRequestError(adapter.logger, error);
     throw error;
   } finally {
     if (request) cleanupRequest(adapter, request.events, request.signal, request.onAbort);

@@ -6,10 +6,12 @@ test("registers and removes listeners", () => {
   const fn = () => {};
   r.add("open", fn);
   r.add("message", fn);
+  const wrapped = raw.on.mock.calls[1][1];
   r.remove("open", fn);
   r.removeAll();
   r.remove("missing", fn);
   r.removeAll("missing");
   expect(raw.on).toHaveBeenCalled();
   expect(raw.removeListener).toHaveBeenCalled();
+  expect(raw.removeListener).toHaveBeenCalledWith("message", wrapped);
 });

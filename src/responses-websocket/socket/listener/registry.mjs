@@ -1,16 +1,14 @@
 import { createSocketListenerBinding } from "./binding.mjs";
-import { adaptSocketListener } from "./adapt.mjs";
 
 export function createListenerRegistry(socket) {
   const listeners = new Map();
   const binding = createSocketListenerBinding(socket);
   return {
     add(event, listener) {
-      const wrapped = adaptSocketListener(event, listener);
       const eventListeners = listeners.get(event) ?? new Map();
+      const wrapped = binding.add(event, listener);
       eventListeners.set(listener, wrapped);
       listeners.set(event, eventListeners);
-      binding.add(event, wrapped);
     },
     remove(event, listener) {
       const wrapped = listeners.get(event)?.get(listener);
