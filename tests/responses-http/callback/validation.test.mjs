@@ -1,4 +1,4 @@
-import { validateCallbackOptions } from "../../../src/responses-http/callback/validate-options.mjs";
+import { validateCallbackOptions } from "../../../src/responses-http/callback/validation.mjs";
 
 test("accepts callback functions and an abort signal", () => {
   const options = {

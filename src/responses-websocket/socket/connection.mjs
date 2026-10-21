@@ -1,4 +1,4 @@
-import { defaultSocket } from "./factory.mjs";
+import { createSocket } from "./factory.mjs";
 import { resolveSocketConfiguration } from "./configuration/resolution.mjs";
 
 export function createSocketConnection(
@@ -10,5 +10,5 @@ export function createSocketConnection(
 ) {
   const configuration = resolveSocketConfiguration(client, savedConfiguration);
   if (!configuration.implementation && !configuration.url) return createDefault();
-  return defaultSocket(configuration.implementation, configuration.url ?? url, authHeaders);
+  return createSocket(configuration.implementation, configuration.url ?? url, authHeaders);
 }
