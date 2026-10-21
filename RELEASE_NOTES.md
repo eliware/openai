@@ -4,23 +4,26 @@
 
 ### Added
 
-- Add an injectable structured logger for HTTP and WebSocket Responses operations.
+- Add the `logger` client option for structured HTTP and WebSocket operation records.
+- Return `response.incomplete` events to stream consumers.
+- Return incomplete response data from non-stream `create` calls.
 
 ### Changed
 
-- Update the OpenAI SDK to its latest release.
-- Align package metadata and specifications with Eliware Convention 15.0.
-- Update Eliware Test, Eliware Log, and the OpenAI SDK.
-- Organize helper modules and tests in matching folders.
-- Use the canonical npm workflow and the required Knit command sequence.
+- Update the OpenAI SDK, Eliware Test, Eliware Log, and other package dependencies.
+- Align package metadata and specifications with Eliware Conventions 13 and 15.
+- Use the canonical npm publishing workflow and align Knit deployment steps.
+- Keep full Git history in CI so release checks can compare tags.
+- Expand end-user guides and rewrite maintained documentation with ASD-STE100 rules.
+- Organize socket, request, callback, pricing, and usage helpers with matching tests.
+- Consolidate client integration tests and remove redundant workflow specifications.
 
 ### Fixed
 
-- Include normalized fields in WebSocket callback events.
-- Preserve provider details in WebSocket failure errors.
-- Give each `ready()` call its own abort signal.
-- Return a promise from repeated `close()` calls.
-- Remove STE wording issues from guides and project instructions.
+- Include raw events and normalized response and request IDs in WebSocket callbacks.
+- Preserve provider details in WebSocket `ResponsesError` values.
+- Use a separate abort signal for each `ready()` call.
+- Return an awaitable result from repeated `close()` calls.
 
 ## 12.0.0 — 2026-10-12
 
