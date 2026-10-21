@@ -56,8 +56,38 @@ describe("createOpenAI", () => {
       "Unsupported transport",
     );
   });
+  test("injects a logger into the HTTP client without logging request data", async () => {
+    const logger = { log: jest.fn() };
+    const client = createOpenAI({
+      apiKey: "secret-key",
+      logger,
+      fetch: async () =>
+        new Response(
+          JSON.stringify({ id: "r1", object: "response", status: "completed", output: [] }),
+          {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          },
+        ),
+    });
+    await client.responses.create({ model: "gpt-6-luna", input: "private input" });
+    expect(logger.log).toHaveBeenCalledWith(
+      "info",
+      "Responses request completed",
+      expect.objectContaining({ transport: "http" }),
+    );
+    expect(JSON.stringify(logger.log.mock.calls)).not.toMatch(
+      /secret-key|private input|gpt-6-luna/,
+    );
+  });
   test("creates websocket client with streaming APIs", async () => {
-    const client = createOpenAI({ apiKey: "key", transport: "websocket", maxQueueSize: 2 });
+    const logger = { log: jest.fn() };
+    const client = createOpenAI({
+      apiKey: "secret-key",
+      transport: "websocket",
+      maxQueueSize: 2,
+      logger,
+    });
     const stream = [];
     for await (const event of client.responses.create({ model: "test", stream: true }))
       stream.push(event);
@@ -68,5 +98,16 @@ describe("createOpenAI", () => {
     const listener = () => {};
     client.responses.on("error", listener).off("error", listener);
     await client.responses.close();
+    expect(logger.log).toHaveBeenCalledWith(
+      "debug",
+      "Responses request started",
+      expect.objectContaining({ transport: "websocket" }),
+    );
+    expect(logger.log).toHaveBeenCalledWith(
+      "verbose",
+      "Responses stream event",
+      expect.objectContaining({ eventType: "response.completed" }),
+    );
+    expect(JSON.stringify(logger.log.mock.calls)).not.toContain("secret-key");
   });
 });

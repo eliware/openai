@@ -35,3 +35,35 @@ test("normalizes a stream error and invokes onError", async () => {
   });
   expect(onError).toHaveBeenCalled();
 });
+
+test("logs unknown HTTP stream events and aborted requests safely", async () => {
+  const logger = { log: jest.fn() };
+  const unknownEvents = [];
+  for await (const event of wrapHTTPStream(
+    (async function* () {
+      yield {};
+    })(),
+    {},
+    logger,
+  ))
+    unknownEvents.push(event);
+  expect(unknownEvents).toHaveLength(1);
+  expect(logger.log).toHaveBeenCalledWith("verbose", "Responses stream event", {
+    component: "@eliware/openai",
+    operation: "responses.create",
+    transport: "http",
+    eventType: "unknown",
+  });
+
+  const aborted = wrapHTTPStream(Promise.reject({ event: { type: "abort" } }), {}, logger);
+  await expect(
+    (async () => {
+      for await (const event of aborted) void event;
+    })(),
+  ).rejects.toThrow();
+  expect(logger.log).toHaveBeenCalledWith(
+    "warn",
+    "Responses request failed",
+    expect.objectContaining({ transport: "http" }),
+  );
+});

@@ -43,6 +43,7 @@
     "node": ">=26"
   },
   "dependencies": {
+    "@eliware/log": "^14.0.0",
     "openai": "^7.39.0",
     "ws": "^8.22.0"
   },

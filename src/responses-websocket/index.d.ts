@@ -7,6 +7,7 @@ import type {
 } from "openai/resources/responses/responses";
 import type { ResponsesEvent } from "../events/normalize.mjs";
 import type { WebSocketConstructor } from "../mock-transport.mjs";
+import type { OpenAILogger } from "../client.mjs";
 import type {
   ResponsesEventHandlerOptions,
   ResponsesRequest,
@@ -63,7 +64,12 @@ export interface ResponsesWebSocketAdapter extends ResponsesWebSocketClientAPI {
 export declare const ResponsesWebSocketAdapter: {
   new (
     client: OpenAI,
-    options?: { maxQueueSize?: number; WebSocketImpl?: WebSocketConstructor; url?: string },
+    options?: {
+      maxQueueSize?: number;
+      WebSocketImpl?: WebSocketConstructor;
+      url?: string;
+      logger?: OpenAILogger;
+    },
     httpResponses?: OpenAI["responses"],
   ): ResponsesWebSocketAdapter;
 };

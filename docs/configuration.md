@@ -30,6 +30,20 @@ const openai = createOpenAI({
 
 See the [OpenAI SDK docs](https://github.com/openai/openai-node) for SDK options.
 
+## Logger
+
+Pass a logger that `@eliware/log` creates to record Responses operations. The package writes structured records for request starts, completions, failures, and stream event types.
+
+```js
+import { createLogger } from "@eliware/log";
+import { createOpenAI } from "@eliware/openai";
+
+const logger = createLogger({ format: "json", level: "debug" });
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY, logger });
+```
+
+The logger supports `error`, `warn`, `info`, `http`, `verbose`, `debug`, and `silly` levels. Set `level` to control the minimum level that the logger writes. The package does not log request input, API keys, or response content.
+
 ## WebSocket options
 
 Set `transport: "websocket"` to select the Responses WebSocket transport. You can set `WebSocketImpl` to a Node-compatible WebSocket constructor and `url` to a WebSocket endpoint.

@@ -1,11 +1,14 @@
 import type OpenAI from "openai";
+import type { LoggerWithConfiguredLevels } from "@eliware/log";
 import type { HTTPResponsesEventAPI } from "./responses-http/index.mjs";
 import type { ResponsesWebSocketClientAPI } from "./responses-websocket/index.mjs";
 import type { WebSocketConstructor } from "./mock-transport.mjs";
 
 export type Transport = "http" | "websocket";
+export type OpenAILogger = Pick<LoggerWithConfiguredLevels, "log">;
 export type OpenAIOptions = ConstructorParameters<typeof OpenAI>[0] & {
   transport?: Transport;
+  logger?: OpenAILogger;
   maxQueueSize?: number;
   WebSocketImpl?: WebSocketConstructor;
   url?: string;

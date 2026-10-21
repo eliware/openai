@@ -2,6 +2,10 @@
 
 ## 14.0.0 — 2026-10-21
 
+### Added
+
+- Add an injectable structured logger for HTTP and WebSocket Responses operations.
+
 ### Changed
 
 - Update the OpenAI SDK to its latest release.

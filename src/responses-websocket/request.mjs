@@ -4,15 +4,16 @@ import { cleanupRequest } from "./request/cleanup.mjs";
 import { sendRequest } from "./request/send.mjs";
 import { ensureReady } from "./request/ready.mjs";
 import { readResponseEvents } from "./request/loop.mjs";
+import { writeLog } from "../logging.mjs";
 
 export async function* requestEvents(adapter, response, options = {}) {
-  const { signal, callbacks, events, controller, onAbort, next, control } = openRequest(
-    adapter,
-    response,
-    options,
-  );
-  const abort = () => abortError(signal);
+  const context = { operation: "responses.create", transport: "websocket" };
+  writeLog(adapter.logger, "debug", "Responses request started", context);
+  let request;
   try {
+    request = openRequest(adapter, response, options);
+    const { signal, callbacks, controller, next, control } = request;
+    const abort = () => abortError(signal);
     await ensureReady(adapter, signal, callbacks);
     if (signal?.aborted) {
       const error = abort();
@@ -20,8 +21,16 @@ export async function* requestEvents(adapter, response, options = {}) {
       throw error;
     }
     sendRequest(adapter, response, callbacks);
-    yield* readResponseEvents(next, callbacks, controller, signal, control);
+    yield* readResponseEvents(next, callbacks, controller, signal, control, adapter.logger);
+  } catch (error) {
+    writeLog(
+      adapter.logger,
+      error?.event?.type === "abort" || error?.name === "AbortError" ? "warn" : "error",
+      "Responses request failed",
+      context,
+    );
+    throw error;
   } finally {
-    cleanupRequest(adapter, events, signal, onAbort);
+    if (request) cleanupRequest(adapter, request.events, request.signal, request.onAbort);
   }
 }

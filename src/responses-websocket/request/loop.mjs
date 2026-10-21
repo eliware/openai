@@ -3,6 +3,7 @@ import { normalizeEvent } from "../../events/normalize.mjs";
 import { processEvent } from "./terminal.mjs";
 import { readRequestEvent } from "./read.mjs";
 import { createRequestControlState } from "./control/state.mjs";
+import { writeLog } from "../../logging.mjs";
 
 export async function* readResponseEvents(
   next,
@@ -10,11 +11,31 @@ export async function* readResponseEvents(
   controller,
   signal,
   control = createRequestControlState(),
+  logger,
 ) {
   while (true) {
     const result = await readRequestEvent(next, callbacks, controller.wasAborted, signal);
     if (result.done) break;
     const outcome = processEvent(result.value, callbacks, control);
+    if (result.value.type === "message") {
+      const eventType = result.value.message?.type;
+      writeLog(logger, "verbose", "Responses stream event", {
+        operation: "responses.create",
+        transport: "websocket",
+        eventType: typeof eventType === "string" ? eventType : "unknown",
+      });
+      if (eventType === "response.completed")
+        writeLog(logger, "info", "Responses request completed", {
+          operation: "responses.create",
+          transport: "websocket",
+        });
+    } else {
+      writeLog(logger, "silly", "Responses transport event", {
+        operation: "responses.create",
+        transport: "websocket",
+        eventType: typeof result.value.type === "string" ? result.value.type : "unknown",
+      });
+    }
     if (outcome.error) {
       callbacks.onError?.(outcome.error, outcome.error.event);
       throw outcome.error;

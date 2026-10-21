@@ -6,9 +6,11 @@ Import public names from `@eliware/openai`. The package uses native ESM. TypeScr
 
 Call `createOpenAI(options)` to create a client. Pass an API key string or an options object. Set `apiKey` in the object or set `OPENAI_API_KEY` in the process environment.
 
-The client accepts the official OpenAI SDK options. It also accepts `transport`, `maxQueueSize`, `WebSocketImpl`, and `url`.
+The client accepts the official OpenAI SDK options. It also accepts `transport`, `logger`, `maxQueueSize`, `WebSocketImpl`, and `url`.
 
 Set `transport` to `"http"` or `"websocket"`. The default is `"http"`. See the [transport guide](transports.md) for WebSocket limits.
+
+Pass a logger created by `@eliware/log` with `logger`. The package writes structured records for request starts, completions, failures, and stream event types. It does not log request input, credentials, or response content. The `OpenAILogger` type describes the logger option.
 
 ## HTTP Responses methods
 

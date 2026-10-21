@@ -26,6 +26,7 @@ A simple OpenAI API client wrapper for Node.js, with ESM and TypeScript support.
 - Use HTTP by default or select the Responses WebSocket transport.
 - Read typed events and `ResponsesError` details.
 - Estimate standard text-token costs for supported GPT-5.6 and GPT-6 models.
+- Inject a structured logger for Responses operations.
 
 ## Requirements
 

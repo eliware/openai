@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { readResponseEvents } from "../../../src/responses-websocket/request/loop.mjs";
 
 async function collect(iterator) {
@@ -22,6 +23,41 @@ test("fails when the stream ends first", async () => {
   await expect(
     collect(readResponseEvents(async () => values[index++], {}, {}, undefined)),
   ).rejects.toThrow("ended before the final response");
+});
+
+test("logs message and transport events without event data", async () => {
+  const logger = { log: jest.fn() };
+  let index = 0;
+  const values = [
+    { value: { type: "message", message: {} }, done: false },
+    { value: { type: 12 }, done: false },
+    { value: { type: "open" }, done: false },
+    { done: true },
+  ];
+  await expect(
+    collect(
+      readResponseEvents(
+        async () => values[index++],
+        {},
+        { wasAborted: () => false },
+        undefined,
+        undefined,
+        logger,
+      ),
+    ),
+  ).rejects.toThrow("ended before the final response");
+  expect(logger.log).toHaveBeenCalledWith("verbose", "Responses stream event", {
+    component: "@eliware/openai",
+    operation: "responses.create",
+    transport: "websocket",
+    eventType: "unknown",
+  });
+  expect(logger.log).toHaveBeenCalledWith("silly", "Responses transport event", {
+    component: "@eliware/openai",
+    operation: "responses.create",
+    transport: "websocket",
+    eventType: "unknown",
+  });
 });
 test("yields ordinary messages and reports terminal errors", async () => {
   let index = 0;

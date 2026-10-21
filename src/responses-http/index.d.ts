@@ -5,6 +5,7 @@ import type {
   ResponseOutputItem,
 } from "openai/resources/responses/responses";
 import type { ResponsesEvent } from "../events/normalize.mjs";
+import type { OpenAILogger } from "../client.mjs";
 
 export type ResponsesRequest = ResponseCreateParams;
 export type ResponsesResponse = Response;
@@ -52,4 +53,5 @@ export interface HTTPResponsesEventAPI {
 
 export declare function createHTTPResponsesAdapter(
   responses: OpenAI["responses"],
+  logger?: OpenAILogger,
 ): OpenAI["responses"] & HTTPResponsesEventAPI;

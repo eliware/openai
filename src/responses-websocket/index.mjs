@@ -4,7 +4,9 @@ import { attachMethods } from "./api/methods.mjs";
 
 export class ResponsesWebSocketAdapter {
   constructor(client, options = {}, httpResponses = client.responses) {
-    this.socket = new InjectableResponsesWS(client, options);
+    const { logger, ...socketOptions } = options;
+    this.logger = logger;
+    this.socket = new InjectableResponsesWS(client, socketOptions);
     initializeState(this, httpResponses);
     attachMethods(this);
   }
