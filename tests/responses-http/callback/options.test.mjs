@@ -1,4 +1,5 @@
-import { HANDLER_KEYS, splitOptions } from "../../../src/responses-http/callback/options.mjs";
+import { splitOptions } from "../../../src/responses-http/callback/options.mjs";
+import { HANDLER_KEYS } from "../../../src/responses-http/callback/keys.mjs";
 
 test("isolates callback options from request options", () => {
   const onEvent = () => {};

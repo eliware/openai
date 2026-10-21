@@ -1,4 +1,5 @@
 import { waitForSocket } from "../../../src/responses-websocket/lifecycle/socket-ready.mjs";
+import { ready } from "../../../src/responses-websocket/lifecycle.mjs";
 
 test("waits for socket open", async () => {
   const handlers = {};
@@ -87,4 +88,25 @@ test("cleans up a socket without off", async () => {
   const pending = waitForSocket(socket);
   handlers.open();
   await expect(pending).resolves.toBeUndefined();
+});
+
+test("aborts one concurrent readiness wait without cancelling another", async () => {
+  const handlers = new Map();
+  const socket = {
+    readyState: 0,
+    on: (name, listener) => handlers.set(name, [...(handlers.get(name) ?? []), listener]),
+    off: (name, listener) =>
+      handlers.set(
+        name,
+        (handlers.get(name) ?? []).filter((item) => item !== listener),
+      ),
+  };
+  const adapter = { socket: { socket }, isOpen: () => false };
+  const controller = new AbortController();
+  const cancelled = ready(adapter, controller.signal);
+  const waiting = ready(adapter);
+  controller.abort();
+  await expect(cancelled).rejects.toMatchObject({ name: "AbortError" });
+  for (const listener of handlers.get("open")) listener();
+  await expect(waiting).resolves.toBeUndefined();
 });

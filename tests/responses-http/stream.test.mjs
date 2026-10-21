@@ -67,3 +67,20 @@ test("logs unknown HTTP stream events and aborted requests safely", async () => 
     expect.objectContaining({ transport: "http" }),
   );
 });
+
+test("logs completion when the stream emits a completed event", async () => {
+  const logger = { log: jest.fn() };
+  for await (const event of wrapHTTPStream(
+    (async function* () {
+      yield { type: "response.completed" };
+    })(),
+    {},
+    logger,
+  ))
+    void event;
+  expect(logger.log).toHaveBeenCalledWith(
+    "info",
+    "Responses request completed",
+    expect.objectContaining({ transport: "http" }),
+  );
+});

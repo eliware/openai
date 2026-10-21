@@ -1,0 +1,15 @@
+export const HANDLER_KEYS = [
+  "signal",
+  "onEvent",
+  "onTextDelta",
+  "onTextDone",
+  "onItemAdded",
+  "onItemDone",
+  "onResponseCreated",
+  "onResponseProgress",
+  "onContentPartAdded",
+  "onContentPartDone",
+  "onResponseCompleted",
+  "onCompleted",
+  "onError",
+];

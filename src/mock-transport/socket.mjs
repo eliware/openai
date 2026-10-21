@@ -1,4 +1,5 @@
 import { initializeSocket } from "./socket/state.mjs";
+import { registerInstance } from "./socket/instances.mjs";
 import { sendMessage, pushMessages } from "./socket/messages.mjs";
 import { closeSocket } from "./socket/lifecycle.mjs";
 import { createMockSocketListenerMethods } from "./socket/listener-methods.mjs";
@@ -12,7 +13,8 @@ export function createMockSocketClass(events, options) {
     static CLOSED = 3;
     static instances = [];
     constructor(url = "", protocols) {
-      initializeSocket(this, MockResponsesWebSocket, defaults, events, url, protocols);
+      initializeSocket(this, defaults, events, url, protocols);
+      registerInstance(MockResponsesWebSocket, this);
       this.listenerMethods = createMockSocketListenerMethods(this);
     }
     on(event, listener) {

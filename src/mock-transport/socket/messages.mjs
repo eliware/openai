@@ -1,14 +1,9 @@
 import { scheduleEvents } from "../scheduler.mjs";
 import { selectEvents } from "./event-selection.mjs";
+import { recordPayload } from "./payload.mjs";
 
 export function sendMessage(socket, data, defaults) {
-  let payload = data;
-  if (typeof data === "string") {
-    try {
-      payload = JSON.parse(data);
-    } catch {}
-  }
-  socket.sent.push(payload);
+  recordPayload(socket, data);
   const batch = selectEvents(socket, data, defaults);
   scheduleEvents(socket, batch, defaults.delay, socket.emit.bind(socket));
   return socket;

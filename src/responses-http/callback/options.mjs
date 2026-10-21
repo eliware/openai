@@ -1,21 +1,6 @@
 import { validateCallbacks } from "../validate/callbacks.mjs";
 import { validateSignal } from "../validate/signal.mjs";
-
-export const HANDLER_KEYS = [
-  "signal",
-  "onEvent",
-  "onTextDelta",
-  "onTextDone",
-  "onItemAdded",
-  "onItemDone",
-  "onResponseCreated",
-  "onResponseProgress",
-  "onContentPartAdded",
-  "onContentPartDone",
-  "onResponseCompleted",
-  "onCompleted",
-  "onError",
-];
+import { HANDLER_KEYS } from "./keys.mjs";
 
 export function splitOptions(options) {
   const handlers = {};

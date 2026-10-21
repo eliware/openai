@@ -1,5 +1,4 @@
 import { jest } from "@jest/globals";
-import { ready } from "../../src/responses-websocket/lifecycle.mjs";
 
 class FakeResponsesWS {
   constructor() {
@@ -45,25 +44,4 @@ test("supports abort, lifecycle, and socket errors", async () => {
   await adapter.ready();
   FakeResponsesWS.events = [{ type: "error", error: new Error("socket") }];
   await expect(adapter.create({})).rejects.toThrow("socket");
-});
-
-test("aborts one concurrent readiness wait without cancelling another", async () => {
-  const handlers = new Map();
-  const socket = {
-    readyState: 0,
-    on: (name, listener) => handlers.set(name, [...(handlers.get(name) ?? []), listener]),
-    off: (name, listener) =>
-      handlers.set(
-        name,
-        (handlers.get(name) ?? []).filter((item) => item !== listener),
-      ),
-  };
-  const adapter = { socket: { socket }, isOpen: () => false };
-  const controller = new AbortController();
-  const cancelled = ready(adapter, controller.signal);
-  const waiting = ready(adapter);
-  controller.abort();
-  await expect(cancelled).rejects.toMatchObject({ name: "AbortError" });
-  for (const listener of handlers.get("open")) listener();
-  await expect(waiting).resolves.toBeUndefined();
 });

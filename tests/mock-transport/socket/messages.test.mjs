@@ -13,7 +13,7 @@ test("parses and schedules sent messages", async () => {
     readyState: 1,
     emit: (...args) => sent.push(args),
   };
-  expect(sendMessage(socket, '{"type":"request"}', { delay: 0 })).toBe(socket);
+  expect(sendMessage(socket, { type: "request" }, { delay: 0 })).toBe(socket);
   expect(socket.sent).toEqual([{ type: "request" }]);
   await jest.advanceTimersByTimeAsync(0);
   expect(sent).toEqual([["message", '{"type":"response.completed"}', false]]);

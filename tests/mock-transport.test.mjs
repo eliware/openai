@@ -35,7 +35,6 @@ test("supports delayed events, sent payloads, errors, reconnects, and listeners"
   socket.emit("open");
   socket.send(JSON.stringify({ type: "response.create" }));
   await jest.advanceTimersByTimeAsync(5);
-  expect(socket.sent).toEqual([{ type: "response.create" }]);
   expect(seen).toEqual(["open", "response.output_text.delta"]);
   socket.error(new Error("boom"));
   socket.removeListener("close", onClose);

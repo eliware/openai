@@ -1,28 +1,11 @@
-import { startCloseTimeout } from "./close/timeout.mjs";
+import { watchSocketClose } from "./close/watch.mjs";
 
 export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
   if (!socket || socket.readyState === 3 || typeof adapter.socket.close !== "function") {
     onComplete();
     return;
   }
-  let settled = false;
-  let clearCloseTimeout;
-  const cleanup = () => {
-    clearCloseTimeout?.();
-    socket.off?.("close", onClose);
-    socket.off?.("error", onError);
-  };
-  const done = (error) => {
-    if (settled) return;
-    settled = true;
-    cleanup();
-    onComplete(error);
-  };
-  const onClose = () => done();
-  const onError = (error) => done(error);
-  clearCloseTimeout = startCloseTimeout(socket, timeout, done);
-  socket.once?.("close", onClose);
-  socket.once?.("error", onError);
+  const done = watchSocketClose(socket, timeout, onComplete);
   try {
     adapter.socket.close(socketProps);
     if (
