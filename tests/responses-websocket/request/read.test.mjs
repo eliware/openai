@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 import { readRequestEvent } from "../../../src/responses-websocket/request/read.mjs";
 
-test("reads transport events and normalizes failures", async () => {
+test("reads transport events", async () => {
   await expect(
     readRequestEvent(
       async () => ({ value: 1, done: false }),
@@ -9,17 +9,6 @@ test("reads transport events and normalizes failures", async () => {
       () => false,
     ),
   ).resolves.toEqual({ value: 1, done: false });
-  const onError = jest.fn();
-  await expect(
-    readRequestEvent(
-      async () => {
-        throw new Error("transport");
-      },
-      { onError },
-      () => false,
-    ),
-  ).rejects.toThrow("transport");
-  expect(onError).toHaveBeenCalled();
 });
 test("reports aborts and preserves ResponsesError failures", async () => {
   const onError = jest.fn();
@@ -47,27 +36,21 @@ test("reports aborts and preserves ResponsesError failures", async () => {
     ),
   ).rejects.toBe(responseError);
 });
-test("uses the default transport error message", async () => {
+test.each([
+  [new Error("transport"), "transport"],
+  [null, "Responses WebSocket request failed"],
+])("normalizes transport failure %p", async (error, message) => {
+  const onError = jest.fn();
   await expect(
     readRequestEvent(
       async () => {
-        throw {};
+        throw error;
       },
-      {},
+      { onError },
       () => false,
     ),
-  ).rejects.toThrow("Responses WebSocket request failed");
-});
-test("handles a null transport failure", async () => {
-  await expect(
-    readRequestEvent(
-      async () => {
-        throw null;
-      },
-      {},
-      () => false,
-    ),
-  ).rejects.toThrow("Responses WebSocket request failed");
+  ).rejects.toThrow(message);
+  expect(onError).toHaveBeenCalled();
 });
 test("handles an explicit non-aborted signal", async () => {
   await expect(
