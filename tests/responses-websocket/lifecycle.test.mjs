@@ -57,18 +57,6 @@ test("composes the public readiness, state, and shutdown methods", async () => {
   expect(adapter._closed).toBe(true);
 });
 
-test("waits for socket open when an event-capable socket is connecting", async () => {
-  const handlers = new Map();
-  const socket = {
-    on: (name, listener) => handlers.set(name, listener),
-    off: (name) => handlers.delete(name),
-  };
-  const adapter = { socket: { socket }, isOpen: () => false };
-  const pending = ready(adapter);
-  handlers.get("open")();
-  await expect(pending).resolves.toBeUndefined();
-});
-
 test("aborts one concurrent readiness wait without cancelling another", async () => {
   const handlers = new Map();
   const socket = {

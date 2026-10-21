@@ -14,6 +14,17 @@ test("waits for socket open", async () => {
   await expect(pending).resolves.toBeUndefined();
 });
 
+test("waits for an event-capable connecting socket", async () => {
+  const handlers = new Map();
+  const socket = {
+    on: (name, listener) => handlers.set(name, listener),
+    off: (name) => handlers.delete(name),
+  };
+  const pending = waitForSocket(socket);
+  handlers.get("open")();
+  await expect(pending).resolves.toBeUndefined();
+});
+
 test("rejects on socket error and close", async () => {
   for (const event of ["error", "close"]) {
     const handlers = {};

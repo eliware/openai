@@ -4,11 +4,10 @@ import { cleanupRequest } from "./request/cleanup.mjs";
 import { sendRequest } from "./request/send.mjs";
 import { ensureReady } from "./request/ready.mjs";
 import { readResponseEvents } from "./request/loop.mjs";
-import { writeLog } from "../logging.mjs";
+import { logRequestStarted, logRequestFailed } from "./request/logging.mjs";
 
 export async function* requestEvents(adapter, response, options = {}) {
-  const context = { operation: "responses.create", transport: "websocket" };
-  writeLog(adapter.logger, "debug", "Responses request started", context);
+  logRequestStarted(adapter.logger);
   let request;
   try {
     request = openRequest(adapter, response, options);
@@ -23,12 +22,7 @@ export async function* requestEvents(adapter, response, options = {}) {
     sendRequest(adapter, response, callbacks);
     yield* readResponseEvents(next, callbacks, controller, signal, control, adapter.logger);
   } catch (error) {
-    writeLog(
-      adapter.logger,
-      error?.event?.type === "abort" || error?.name === "AbortError" ? "warn" : "error",
-      "Responses request failed",
-      context,
-    );
+    logRequestFailed(adapter.logger, error);
     throw error;
   } finally {
     if (request) cleanupRequest(adapter, request.events, request.signal, request.onAbort);

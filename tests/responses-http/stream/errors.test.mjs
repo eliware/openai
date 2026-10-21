@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { normalizeStreamError } from "../../src/responses-http/stream-errors.mjs";
+import { normalizeStreamError } from "../../../src/responses-http/stream/errors.mjs";
 
 test("normalizes and reports stream errors", () => {
   const handlers = { onError: jest.fn() };
