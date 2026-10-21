@@ -1,4 +1,4 @@
-import { createCloseTimeoutError } from "./timeout-error.mjs";
+import { startCloseTimeout } from "./close/timeout.mjs";
 
 export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
   if (!socket || socket.readyState === 3 || typeof adapter.socket.close !== "function") {
@@ -6,17 +6,9 @@ export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
     return;
   }
   let settled = false;
-  const timer = setTimeout(
-    () => {
-      try {
-        socket.terminate?.();
-      } catch {}
-      done(createCloseTimeoutError());
-    },
-    Math.max(0, timeout),
-  );
+  let clearCloseTimeout;
   const cleanup = () => {
-    clearTimeout(timer);
+    clearCloseTimeout?.();
     socket.off?.("close", onClose);
     socket.off?.("error", onError);
   };
@@ -28,6 +20,7 @@ export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
   };
   const onClose = () => done();
   const onError = (error) => done(error);
+  clearCloseTimeout = startCloseTimeout(socket, timeout, done);
   socket.once?.("close", onClose);
   socket.once?.("error", onError);
   try {

@@ -1,4 +1,4 @@
-import { reuseClosePromise } from "../../../src/responses-websocket/shutdown/close-promise.mjs";
+import { reuseClosePromise } from "../../../../src/responses-websocket/shutdown/close/promise.mjs";
 
 test("reuses an active close promise and skips a closed adapter", async () => {
   const adapter = {};

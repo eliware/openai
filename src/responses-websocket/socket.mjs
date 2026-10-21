@@ -1,17 +1,20 @@
 import { getResponsesWebSocketResource } from "../transports/responses-websocket.mjs";
 import { defaultSocket } from "./socket/factory.mjs";
-import { prepareClient, consumeClientConfiguration } from "./socket/configuration/pending.mjs";
+import {
+  prepareSocketConfiguration,
+  consumeSocketConfiguration,
+} from "./socket/configuration/handoff.mjs";
 import { resolveSocketConfiguration } from "./socket/configuration/resolve.mjs";
 
 const ResponsesWS = getResponsesWebSocketResource();
 
 export class InjectableResponsesWS extends ResponsesWS {
   constructor(client, options) {
-    prepareClient(client, options.url, options.WebSocketImpl);
+    prepareSocketConfiguration(client, options);
     super(client, options);
-    const prepared = consumeClientConfiguration(client);
-    this._customWebSocket = prepared.implementation ?? options.WebSocketImpl;
-    this._customURL = prepared.url ?? options.url;
+    const configuration = consumeSocketConfiguration(client, options);
+    this._customWebSocket = configuration.implementation;
+    this._customURL = configuration.url;
   }
   // Injected sockets use the 2.0 runtime contract. They use Node-style options.
   // The options include `{ headers }`. The browser constructor is unsupported.

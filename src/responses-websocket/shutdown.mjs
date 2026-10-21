@@ -1,6 +1,6 @@
 import { cancelStreams } from "./shutdown/stream-cleanup.mjs";
 import { closeSocket } from "./shutdown/socket-close.mjs";
-import { reuseClosePromise } from "./shutdown/close-promise.mjs";
+import { reuseClosePromise } from "./shutdown/close/promise.mjs";
 
 export function close(adapter, props = {}) {
   const { timeout = 30_000, ...socketProps } = props ?? {};
