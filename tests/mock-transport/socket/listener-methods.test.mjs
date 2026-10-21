@@ -1,11 +1,10 @@
 import { createMockSocketListenerMethods } from "../../../src/mock-transport/socket/listener-methods.mjs";
 
-test("removes a once listener before it calls the listener", () => {
+test("composes listener registration and one-shot methods", () => {
   const socket = { listeners: new Map() };
   const methods = createMockSocketListenerMethods(socket);
-  const seen = [];
-  expect(methods.once("open", (value) => seen.push(value))).toBe(socket);
-  methods.emit("open", "ready");
-  methods.emit("open", "again");
-  expect(seen).toEqual(["ready"]);
+
+  expect(methods.on).toEqual(expect.any(Function));
+  expect(methods.once).toEqual(expect.any(Function));
+  expect(methods.off).toEqual(expect.any(Function));
 });

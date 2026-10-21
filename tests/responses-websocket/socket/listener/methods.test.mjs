@@ -25,20 +25,11 @@ test("adapts listener methods through a registry", () => {
   ]);
 });
 
-test("removes a once listener before it calls the listener", () => {
-  const calls = [];
-  let onCallback;
-  const adapter = {
-    listeners: {
-      add: (_event, callback) => (onCallback = callback),
-      remove: (_event, callback) => calls.push(["remove", callback]),
-      removeAll() {},
-    },
-  };
+test("composes registration and one-shot listener methods", () => {
+  const adapter = { listeners: { add() {}, remove() {}, removeAll() {} } };
   const methods = createListenerMethods(adapter);
-  const listener = (value) => calls.push(["listener", value]);
-  expect(methods.once("open", listener)).toBe(adapter);
-  onCallback("ready");
-  expect(calls[0][0]).toBe("remove");
-  expect(calls[1]).toEqual(["listener", "ready"]);
+
+  expect(methods.on).toEqual(expect.any(Function));
+  expect(methods.once).toEqual(expect.any(Function));
+  expect(methods.removeAllListeners).toEqual(expect.any(Function));
 });

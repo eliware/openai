@@ -1,12 +1,13 @@
+import { watchCloseEvents } from "./events.mjs";
 import { startCloseTimeout } from "./timeout.mjs";
 
 export function watchSocketClose(socket, timeout, onComplete) {
   let settled = false;
   let clearCloseTimeout;
+  let clearCloseEvents = () => {};
   const cleanup = () => {
     clearCloseTimeout?.();
-    socket.off?.("close", onClose);
-    socket.off?.("error", onError);
+    clearCloseEvents();
   };
   const done = (error) => {
     if (settled) return;
@@ -17,7 +18,6 @@ export function watchSocketClose(socket, timeout, onComplete) {
   const onClose = () => done();
   const onError = (error) => done(error);
   clearCloseTimeout = startCloseTimeout(socket, timeout, done);
-  socket.once?.("close", onClose);
-  socket.once?.("error", onError);
+  clearCloseEvents = watchCloseEvents(socket, onClose, onError);
   return done;
 }
