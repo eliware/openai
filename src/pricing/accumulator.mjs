@@ -1,4 +1,5 @@
 import { calculateUsageCostBreakdown } from "./calculator.mjs";
+import { roundCost } from "./format-breakdown.mjs";
 
 export function createPricingAccumulator() {
   const totals = new Map();
@@ -20,8 +21,8 @@ export function createPricingAccumulator() {
       current.cached_tokens += breakdown.cached_tokens;
       current.cache_write_tokens += breakdown.cache_write_tokens;
       current.output_tokens += breakdown.output_tokens;
-      current.estimated_cost_usd = Number(
-        (current.estimated_cost_usd + breakdown.estimated_cost_usd).toFixed(6),
+      current.estimated_cost_usd = roundCost(
+        current.estimated_cost_usd + breakdown.estimated_cost_usd,
       );
       totals.set(model, current);
       requests += 1;
@@ -30,7 +31,7 @@ export function createPricingAccumulator() {
     summary() {
       const models = Object.fromEntries([...totals].map(([model, value]) => [model, { ...value }]));
       const total = Object.values(models).reduce((sum, value) => sum + value.estimated_cost_usd, 0);
-      return { requests, estimated_cost_usd: Number(total.toFixed(6)), models };
+      return { requests, estimated_cost_usd: roundCost(total), models };
     },
   };
 }

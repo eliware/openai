@@ -1,19 +1,18 @@
 import { wrapHTTPStream } from "./stream.mjs";
 import { splitRequest } from "./request-options.mjs";
 import { completeHTTP } from "./completion.mjs";
-import { writeLog } from "../logging.mjs";
+import { logHTTP } from "./logging.mjs";
 
 export function createHTTPCreate(responses, logger) {
   return (input = {}, options = {}) => {
     const { handlers, request, requestOptions, streaming } = splitRequest(input, options);
-    const context = { operation: "responses.create", transport: "http" };
-    writeLog(logger, "debug", "Responses request started", context);
-    writeLog(logger, "http", "Responses request sent", context);
+    logHTTP(logger, "started");
+    logHTTP(logger, "sent");
     let result;
     try {
       result = responses.create(request, requestOptions);
     } catch (error) {
-      writeLog(logger, "error", "Responses request failed", context);
+      logHTTP(logger, "failed", error);
       throw error;
     }
     return streaming

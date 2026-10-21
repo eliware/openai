@@ -1,4 +1,4 @@
-import { formatBreakdown } from "../../src/pricing/format-breakdown.mjs";
+import { formatBreakdown, roundCost } from "../../src/pricing/format-breakdown.mjs";
 test("formats pricing breakdown", () => {
   const result = formatBreakdown(
     "m",
@@ -8,4 +8,8 @@ test("formats pricing breakdown", () => {
   );
   expect(result.model).toBe("m");
   expect(result.uncached_input_cost_usd).toBe(1.234568);
+});
+
+test("rounds cost values to six decimal places", () => {
+  expect(roundCost(1.2345678)).toBe(1.234568);
 });

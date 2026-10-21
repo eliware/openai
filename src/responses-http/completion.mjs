@@ -1,15 +1,12 @@
 import { normalizeEvent } from "../events/normalize.mjs";
 import { responsesErrorFrom } from "../errors/http-normalize.mjs";
 import { dispatch } from "./callback/dispatch.mjs";
-import { writeLog } from "../logging.mjs";
+import { logHTTP } from "./logging.mjs";
 
 export function completeHTTP(result, handlers, logger) {
   return Promise.resolve(result).then(
     (response) => {
-      writeLog(logger, "info", "Responses request completed", {
-        operation: "responses.create",
-        transport: "http",
-      });
+      logHTTP(logger, "completed");
       const event = normalizeEvent({
         type: "response.completed",
         response,
@@ -20,15 +17,7 @@ export function completeHTTP(result, handlers, logger) {
       return response;
     },
     (error) => {
-      writeLog(
-        logger,
-        error?.event?.type === "abort" ? "warn" : "error",
-        "Responses request failed",
-        {
-          operation: "responses.create",
-          transport: "http",
-        },
-      );
+      logHTTP(logger, "failed", error);
       const responseError = responsesErrorFrom(error, { type: "error" });
       handlers.onError?.(responseError, normalizeEvent(responseError.event));
       throw responseError;

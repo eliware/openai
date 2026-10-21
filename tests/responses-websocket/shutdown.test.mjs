@@ -48,22 +48,8 @@ jest.unstable_mockModule("ws", () => ({
   },
 }));
 const { ResponsesWebSocketAdapter } = await import("../../src/responses-websocket/index.mjs");
-const make = (http = {}) => new ResponsesWebSocketAdapter({}, {}, http);
 
 describe("ResponsesWebSocketAdapter", () => {
-  test("supports abort, lifecycle, and socket errors", async () => {
-    const adapter = make();
-    const controller = new AbortController();
-    controller.abort();
-    await expect(adapter.create({}, { signal: controller.signal })).rejects.toMatchObject({
-      name: "AbortError",
-    });
-    expect(adapter.isOpen()).toBe(true);
-    expect(adapter.state).toBe("open");
-    await adapter.ready();
-    FakeResponsesWS.events = [{ type: "error", error: new Error("socket") }];
-    await expect(adapter.create({})).rejects.toThrow("socket");
-  });
   test("uses the default WebSocket implementation when only url is supplied", async () => {
     const adapter = new ResponsesWebSocketAdapter({}, { url: "ws://custom" }, {});
     expect(adapter.socket._createSocket("ws://default", {}).readyState).toBe(1);

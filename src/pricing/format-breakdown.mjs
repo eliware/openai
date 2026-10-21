@@ -1,5 +1,8 @@
+export function roundCost(value) {
+  return Number(value.toFixed(6));
+}
+
 export function formatBreakdown(model, normalized, longContext, costs) {
-  const round = (value) => Number(value.toFixed(6));
   return {
     model,
     input_tokens: normalized.input,
@@ -7,10 +10,10 @@ export function formatBreakdown(model, normalized, longContext, costs) {
     cache_write_tokens: normalized.cacheWrite,
     output_tokens: normalized.output,
     long_context: longContext,
-    uncached_input_cost_usd: round(costs.uncached),
-    cached_input_cost_usd: round(costs.cached),
-    cache_write_cost_usd: round(costs.cacheWrite),
-    output_cost_usd: round(costs.output),
-    estimated_cost_usd: round(costs.total),
+    uncached_input_cost_usd: roundCost(costs.uncached),
+    cached_input_cost_usd: roundCost(costs.cached),
+    cache_write_cost_usd: roundCost(costs.cacheWrite),
+    output_cost_usd: roundCost(costs.output),
+    estimated_cost_usd: roundCost(costs.total),
   };
 }
