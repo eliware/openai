@@ -1,4 +1,6 @@
 import { scheduleEvents } from "../scheduler.mjs";
+import { selectEvents } from "./event-selection.mjs";
+
 export function sendMessage(socket, data, defaults) {
   let payload = data;
   if (typeof data === "string") {
@@ -7,10 +9,7 @@ export function sendMessage(socket, data, defaults) {
     } catch {}
   }
   socket.sent.push(payload);
-  const batch =
-    typeof defaults.events === "function" ? defaults.events(data, socket) : socket._events;
-  if (!Array.isArray(batch))
-    throw new TypeError("Mock transport event factory must return an array");
+  const batch = selectEvents(socket, data, defaults);
   scheduleEvents(socket, batch, defaults.delay, socket.emit.bind(socket));
   return socket;
 }

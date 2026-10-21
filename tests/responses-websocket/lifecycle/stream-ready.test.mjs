@@ -1,4 +1,18 @@
 import { waitForStream } from "../../../src/responses-websocket/lifecycle/stream-ready.mjs";
+import { ready } from "../../../src/responses-websocket/lifecycle.mjs";
+
+test("uses the stream when a socket has no listener methods", async () => {
+  const adapter = {
+    socket: {
+      socket: {},
+      stream: async function* () {
+        yield { type: "open" };
+      },
+    },
+    isOpen: () => false,
+  };
+  await expect(ready(adapter)).resolves.toBeUndefined();
+});
 
 test("waits for stream readiness", async () => {
   const adapter = {

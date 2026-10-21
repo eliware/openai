@@ -57,19 +57,6 @@ test("composes the public readiness, state, and shutdown methods", async () => {
   expect(adapter._closed).toBe(true);
 });
 
-test("waits for stream readiness without socket listeners", async () => {
-  const adapter = {
-    socket: {
-      socket: {},
-      stream: async function* () {
-        yield { type: "open" };
-      },
-    },
-    isOpen: () => false,
-  };
-  await expect(ready(adapter)).resolves.toBeUndefined();
-});
-
 test("waits for socket open when an event-capable socket is connecting", async () => {
   const handlers = new Map();
   const socket = {

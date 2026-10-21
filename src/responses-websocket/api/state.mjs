@@ -1,3 +1,5 @@
+import { getStateName } from "./state-name.mjs";
+
 export function initializeState(adapter, httpResponses) {
   adapter.httpResponses = httpResponses;
   adapter.inputItems = httpResponses?.inputItems;
@@ -13,8 +15,5 @@ export function isOpen(adapter) {
 }
 
 export function state(adapter) {
-  if (adapter._closePromise && !adapter._closed) return "closing";
-  const states = ["connecting", "open", "closing", "closed"];
-  const readyState = adapter.socket.socket?.readyState ?? 3;
-  return states[readyState] ?? "closed";
+  return getStateName(adapter);
 }

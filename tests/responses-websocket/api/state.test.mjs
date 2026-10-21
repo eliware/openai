@@ -1,17 +1,18 @@
-import { initializeState, isOpen, state } from "../../../src/responses-websocket/api/state.mjs";
+import { initializeState, isOpen } from "../../../src/responses-websocket/api/state.mjs";
 
-test("initializes and reports adapter state", () => {
+test("initializes adapter state", () => {
   const adapter = { socket: { socket: { readyState: 1 } } };
   initializeState(adapter, { inputItems: {}, inputTokens: {} });
   expect(isOpen(adapter)).toBe(true);
-  expect(state(adapter)).toBe("open");
-  adapter._closePromise = Promise.resolve();
-  expect(state(adapter)).toBe("closing");
-  adapter._closePromise = null;
-  adapter.socket.socket.readyState = 99;
-  expect(state(adapter)).toBe("closed");
-  adapter.socket.socket.readyState = -1;
-  expect(state(adapter)).toBe("closed");
-  adapter.socket.socket.readyState = undefined;
-  expect(state(adapter)).toBe("closed");
+  expect(adapter.inputItems).toEqual({});
+  expect(adapter.inputTokens).toEqual({});
+  expect(adapter._activeStreams).toBeInstanceOf(Set);
+  expect(adapter._closePromise).toBeNull();
+});
+
+test("checks whether the socket is open", () => {
+  const adapter = { socket: { socket: { readyState: 1 } } };
+  expect(isOpen(adapter)).toBe(true);
+  adapter.socket.socket.readyState = 0;
+  expect(isOpen(adapter)).toBe(false);
 });

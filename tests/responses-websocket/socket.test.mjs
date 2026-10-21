@@ -21,7 +21,19 @@ class FakeResponsesWS {
 }
 
 jest.unstable_mockModule("openai/resources/responses/ws", () => ({ ResponsesWS: FakeResponsesWS }));
-jest.unstable_mockModule("ws", () => ({ WebSocket: class {} }));
+const defaultCalls = [];
+jest.unstable_mockModule("ws", () => ({
+  WebSocket: class DefaultSocket {
+    constructor(...args) {
+      defaultCalls.push(args);
+      this.readyState = 1;
+      this.on = () => {};
+      this.removeListener = () => {};
+      this.send = () => {};
+      this.close = () => {};
+    }
+  },
+}));
 const { ResponsesWebSocketAdapter } = await import("../../src/responses-websocket/index.mjs");
 const { InjectableResponsesWS } = await import("../../src/responses-websocket/socket.mjs");
 
@@ -59,8 +71,11 @@ test("selects default and injected sockets with configured URL and auth headers"
   injected._createSocket("ws://fallback", { Authorization: "custom" });
   const implementationOnly = new InjectableResponsesWS({}, { WebSocketImpl: CustomSocket });
   implementationOnly._createSocket("ws://fallback", { Authorization: "implementation" });
+  const urlOnly = new InjectableResponsesWS({}, { url: "ws://url-only" });
+  urlOnly._createSocket("ws://fallback", { Authorization: "url-only" });
   expect(calls).toEqual([
     ["ws://custom", { headers: { Authorization: "custom" } }],
     ["ws://fallback", { headers: { Authorization: "implementation" } }],
   ]);
+  expect(defaultCalls).toEqual([["ws://url-only", { headers: { Authorization: "url-only" } }]]);
 });
