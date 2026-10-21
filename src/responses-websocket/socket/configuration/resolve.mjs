@@ -1,4 +1,4 @@
-import { readClientConfiguration } from "../configuration.mjs";
+import { readClientConfiguration } from "./pending.mjs";
 
 export function resolveSocketConfiguration(client, savedConfiguration) {
   const pending = readClientConfiguration(client);

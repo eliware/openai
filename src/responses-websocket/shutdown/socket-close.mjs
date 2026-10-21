@@ -1,4 +1,4 @@
-import { ResponsesError } from "../../errors/responses-error.mjs";
+import { createCloseTimeoutError } from "./timeout-error.mjs";
 
 export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
   if (!socket || socket.readyState === 3 || typeof adapter.socket.close !== "function") {
@@ -11,11 +11,7 @@ export function closeSocket(adapter, socket, socketProps, timeout, onComplete) {
       try {
         socket.terminate?.();
       } catch {}
-      done(
-        new ResponsesError("Responses WebSocket close timed out", {
-          event: { type: "close", code: "timeout" },
-        }),
-      );
+      done(createCloseTimeoutError());
     },
     Math.max(0, timeout),
   );

@@ -1,6 +1,6 @@
 import { getResponsesWebSocketResource } from "../transports/responses-websocket.mjs";
 import { defaultSocket } from "./socket/factory.mjs";
-import { prepareClient, consumeClientConfiguration } from "./socket/configuration.mjs";
+import { prepareClient, consumeClientConfiguration } from "./socket/configuration/pending.mjs";
 import { resolveSocketConfiguration } from "./socket/configuration/resolve.mjs";
 
 const ResponsesWS = getResponsesWebSocketResource();

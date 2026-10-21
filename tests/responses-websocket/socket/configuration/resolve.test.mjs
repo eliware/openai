@@ -1,5 +1,5 @@
 import { resolveSocketConfiguration } from "../../../../src/responses-websocket/socket/configuration/resolve.mjs";
-import { prepareClient } from "../../../../src/responses-websocket/socket/configuration.mjs";
+import { prepareClient } from "../../../../src/responses-websocket/socket/configuration/pending.mjs";
 
 test("resolves saved socket options before pending options", () => {
   const client = {};

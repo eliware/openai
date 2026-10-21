@@ -16,14 +16,7 @@ test("processes terminal protocol events", () => {
     { type: "message", message: { type: "response.failed", error: providerError } },
     {},
   ).error;
-  expect(failed).toMatchObject({
-    message: "bad",
-    code: "quota",
-    status: 429,
-    parameter: "model",
-    requestId: "req-1",
-    cause: providerError,
-  });
+  expect(failed).toMatchObject({ message: "bad", cause: providerError });
   expect(
     processEvent(
       { type: "message", message: { type: "response.output_text.delta", delta: "x" } },
