@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { createListenerRegistry } from "../../../src/responses-websocket/socket/listener-registry.mjs";
+import { createListenerRegistry } from "../../../../src/responses-websocket/socket/listener/registry.mjs";
 test("registers and removes listeners", () => {
   const raw = { on: jest.fn(), removeListener: jest.fn() };
   const r = createListenerRegistry(raw);

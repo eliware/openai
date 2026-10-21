@@ -1,61 +1,149 @@
 # API
 
-Import public names from `@eliware/openai`. The package uses native ESM. TypeScript names come from the package root.
+Import runtime functions and TypeScript types from the `@eliware/openai` package root.
+The package uses native ESM and the official OpenAI Node.js SDK.
 
 ## Create a client
 
-Call `createOpenAI(options)` to create a client. Pass an API key string or an options object. Set `apiKey` in the object or set `OPENAI_API_KEY` in the process environment.
+Install `@eliware/openai` and set an API key. Call `createOpenAI()` to create a client.
 
-The client accepts the official OpenAI SDK options. It also accepts `transport`, `logger`, `maxQueueSize`, `WebSocketImpl`, and `url`.
+```js
+import { createOpenAI } from "@eliware/openai";
 
-Set `transport` to `"http"` or `"websocket"`. The default is `"http"`. See the [transport guide](transports.md) for WebSocket limits.
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const response = await openai.responses.create({
+  model: "gpt-6-luna",
+  input: "Summarize the purpose of this package.",
+});
+console.log(response.output_text);
+```
 
-Pass a logger created by `@eliware/log` with `logger`. The package writes structured records for request starts, completions, failures, and stream event types. It does not log request input, credentials, or response content. The `OpenAILogger` type describes the logger option.
+Pass the API key as a string when you do not require other options.
+Set `OPENAI_API_KEY` to use the environment value.
+Pass `apiKey` to override the environment value.
+See [Configuration](configuration.md) for all wrapper options.
 
 ## HTTP Responses methods
 
-The HTTP client keeps the official SDK Responses methods. It adds `create`, `createWithEvents`, `events`, and `stream`.
+HTTP is the default transport. The client keeps the official SDK Responses methods.
+The wrapper adds callback support and these stream helpers.
 
-- Call `create(input, options)` for a response or an async event stream.
-- Set `input.stream` to `true` to make `create` return an async event stream.
-- Call `createWithEvents(input, handlers)` to receive a response and callbacks.
-- Set `input.stream` to `true` with `createWithEvents()` to consume events and resolve after the stream ends.
-- Call `events(input, options)` or `stream(input, options)` to read an async event stream.
-- Pass request options in `input`. Pass callbacks and an `AbortSignal` in `options`.
+| Method                              | Result                                                                                                      |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `create(input, options)`            | Return a response promise, or an async event stream when `stream` is `true`.                                |
+| `createWithEvents(input, handlers)` | Return the response promise. Consume a stream and resolve without a response when `input.stream` is `true`. |
+| `events(input, options)`            | Return an async event stream.                                                                               |
+| `stream(input, options)`            | Return an async event stream.                                                                               |
 
-The callbacks include `onEvent`, `onResponseCreated`, `onResponseProgress`, `onContentPartAdded`, `onContentPartDone`, `onTextDelta`, `onTextDone`, `onItemAdded`, `onItemDone`, `onCompleted`, `onResponseCompleted`, and `onError`.
+Pass request fields in `input`.
+Pass callbacks and `signal` in `options` to keep helper settings separate from API request fields.
+The wrapper also reads callback fields from `input`.
 
-Each callback receives the event data first and a normalized event second. The normalized event keeps raw data and available response and request IDs.
+```js
+const response = await openai.responses.create(
+  { model: "gpt-6-luna", input: "Count to three." },
+  { onCompleted: (result) => console.log(result.output_text) },
+);
+```
+
+Use `stream: true` to read events as the API sends them.
+
+```js
+for await (const event of openai.responses.stream({
+  model: "gpt-6-luna",
+  input: "Count to three.",
+})) {
+  if (event.type === "response.output_text.delta") process.stdout.write(event.delta);
+}
+```
+
+## Callbacks and events
+
+Pass these callbacks in `options` or in the request input.
+
+| Callback              | Value                                           |
+| --------------------- | ----------------------------------------------- |
+| `onEvent`             | Receive the normalized event and its raw event. |
+| `onResponseCreated`   | Receive a response when it starts.              |
+| `onResponseProgress`  | Receive a response when it enters progress.     |
+| `onContentPartAdded`  | Receive a content part when it starts.          |
+| `onContentPartDone`   | Receive a content part when it ends.            |
+| `onTextDelta`         | Receive each text delta.                        |
+| `onTextDone`          | Receive completed text.                         |
+| `onItemAdded`         | Receive an output item when it starts.          |
+| `onItemDone`          | Receive an output item when it ends.            |
+| `onCompleted`         | Receive the completed response.                 |
+| `onResponseCompleted` | Receive the completed response.                 |
+| `onError`             | Receive an error and its event.                 |
+
+`onEvent` receives `(normalizedEvent, rawEvent)`.
+Each event-specific callback receives `(value, normalizedEvent)`.
+The normalized event can include `raw`, `responseId`, and `requestId` fields.
+`onCompleted` and `onResponseCompleted` receive the same completed response.
+
+The wrapper calls `onTextDelta` for `response.output_text.delta` events.
+It calls `onCompleted` and `onResponseCompleted` for `response.completed` events.
+It calls `onError` when a request or stream fails.
 
 ## WebSocket Responses methods
 
-The WebSocket client adds `create`, `createWithEvents`, `events`, `stream`, `steer`, `continueResponse`, `ready`, `isOpen`, `state`, and `close`.
+Set `transport: "websocket"` to select the WebSocket client.
+The client also provides these methods.
 
-- Call `create(input, options)` for a response or set `input.stream` to `true` for an async event stream.
-- Call `createWithEvents(input, handlers)` to receive a response and callbacks.
-- Set `input.stream` to `true` with `createWithEvents()` to consume events and resolve after the stream ends.
-- Call `events(input, options)` or `stream(input, options)` to read an async event stream.
-- Call `ready()` to wait for the socket to open. Check `isOpen()` or `state` to read its state.
-- Call `close()` and await its promise when the client no longer needs the socket.
-- Call `steer(previousResponseId, input)` during the active response. Use a string or a non-empty input array.
-- Call `continueResponse(input)` after a `response.steer.pending` event. Set the matching `previous_response_id`.
+| Method                                         | Use                                                                                |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `create(input, options)`                       | Return a response promise, or an async event stream when `stream` is `true`.       |
+| `createWithEvents(input, handlers)`            | Return the response promise, or consume the stream and resolve without a response. |
+| `events(input, options)`                       | Return an async event stream.                                                      |
+| `stream(input, options)`                       | Return an async event stream.                                                      |
+| `steer(previousResponseId, input)`             | Send more input to the current response.                                           |
+| `continueResponse(input)`                      | Continue after a matching `response.steer.pending` event.                          |
+| `ready(signal)`                                | Wait for the socket to open.                                                       |
+| `isOpen()`                                     | Return `true` if the socket is open.                                               |
+| `state`                                        | Read `connecting`, `open`, `closing`, or `closed`.                                 |
+| `close(options)`                               | Close the socket and return a promise.                                             |
+| `on(name, listener)` and `off(name, listener)` | Add or remove a socket event listener.                                             |
 
-One response request can run at a time on each WebSocket client. The client does not reconnect or replay a request after a connection failure.
+One response request can run at a time on each WebSocket client.
+The client does not reconnect or replay a request after a connection failure.
+See [Transport details](transports.md) for socket behavior and steering examples.
 
 ## Pricing methods
 
-- Call `getPricing(model)` to read a model's token rates.
-- Call `normalizeUsage(usage)` to validate and normalize Responses API usage.
-- Call `calculateUsageCost(model, usage)` to calculate the estimated USD cost.
-- Call `calculateUsageCostBreakdown(model, usage)` to return token counts and cost fields.
-- Call `createPricingAccumulator()` to add requests and read totals with `summary()`.
+The package exports these pricing functions and constants.
 
-See the [pricing guide](pricing.md) for supported models, rates, and limits.
+| Export                                      | Use                                                          |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| `getPricing(model)`                         | Read rates for a supported model.                            |
+| `API_PRICING`                               | Read the full supported model catalog.                       |
+| `normalizeUsage(usage)`                     | Validate and normalize Responses API usage.                  |
+| `calculateUsageCost(model, usage)`          | Return an estimated total in USD.                            |
+| `calculateUsageCostBreakdown(model, usage)` | Return token counts, cost fields, and the long-context flag. |
+| `createPricingAccumulator()`                | Add requests and read totals by model.                       |
+| `LONG_CONTEXT_INPUT_THRESHOLD`              | Read the token count that starts long-context pricing.       |
+| `LONG_CONTEXT_INPUT_MULTIPLIERS`            | Read the input and output long-context multipliers.          |
+
+See [Pricing](pricing.md) for model rates, input fields, and estimate limits.
+
+## Function tools
+
+The client accepts Responses API tool parameters through the official SDK.
+Use the async function tool example to read tool calls, run application code, and send function outputs.
+See [the async tool example](../examples/gpt-6-async-tool.mjs).
 
 ## Errors and types
 
-Transport failures use `ResponsesError`. It can include `event`, `code`, `type`, `status`, `parameter`, `requestId`, and `cause` fields.
+Transport failures use `ResponsesError`.
+The error can include `event`, `code`, `type`, `status`, `parameter`, `requestId`, and `cause` fields.
+Call `eventErrorDetails(event)` to read normalized error fields.
 
-The package exports request, response, event, transport, pricing, and client types. It also exports `eventErrorDetails`, `normalizeEvent`, `API_PRICING`, and `LONG_CONTEXT_INPUT_THRESHOLD`.
+`normalizeEvent(event)` adds raw event data and available response and request IDs.
+The package also exports `ResponsesEvent`, request and response types, callback option types,
+`OpenAIOptions`, `OpenAILogger`, and client types.
+See [the type declarations](../src/index.d.ts) for exact definitions.
 
-See the [type declarations](../src/index.d.ts) for exact type definitions.
+## Advanced entrypoints
+
+The package root exports `createHTTPResponsesAdapter()`,
+`createMockResponsesTransport()`, and `ResponsesWebSocketAdapter`.
+Use these exports when you must connect a Responses adapter or a test transport directly.

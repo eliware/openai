@@ -1,4 +1,4 @@
-import { wrapSocketListener } from "./event-wrapper.mjs";
+import { wrapSocketListener } from "../event-wrapper.mjs";
 
 export function createListenerRegistry(socket) {
   const listeners = new Map();

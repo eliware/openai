@@ -1,11 +1,13 @@
-import { createListenerRegistry } from "./listener-registry.mjs";
+import { createListenerRegistry } from "./listener/registry.mjs";
 import { createSocketOperations } from "./operations.mjs";
+import { createListenerMethods } from "./listener/methods.mjs";
 
 export class NodeSocketAdapter {
   constructor(socket) {
     this.socket = socket;
     this.listeners = createListenerRegistry(socket);
     this.operations = createSocketOperations(socket);
+    this.listenerMethods = createListenerMethods(this);
   }
   get readyState() {
     return this.socket.readyState;
@@ -17,31 +19,24 @@ export class NodeSocketAdapter {
     this.operations.close(code, reason);
   }
   on(event, listener) {
-    this.listeners.add(event, listener);
-    return this;
+    return this.listenerMethods.on(event, listener);
   }
   off(event, listener) {
-    this.listeners.remove(event, listener);
-    return this;
+    return this.listenerMethods.off(event, listener);
   }
   once(event, listener) {
-    const once = (...args) => {
-      this.off(event, once);
-      listener(...args);
-    };
-    return this.on(event, once);
+    return this.listenerMethods.once(event, listener);
   }
   removeAllListeners(event) {
-    this.listeners.removeAll(event);
-    return this;
+    return this.listenerMethods.removeAllListeners(event);
   }
   terminate() {
     return this.operations.terminate();
   }
   addEventListener(event, listener) {
-    return this.on(event, listener);
+    return this.listenerMethods.addEventListener(event, listener);
   }
   removeEventListener(event, listener) {
-    return this.off(event, listener);
+    return this.listenerMethods.removeEventListener(event, listener);
   }
 }

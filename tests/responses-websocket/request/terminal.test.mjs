@@ -108,33 +108,11 @@ test("defers completion while steering, accepts steered incomplete, and resolves
   ).toEqual({ done: true });
 });
 
-test("processes lifecycle, reconnect, incomplete, and unknown events", () => {
-  const seen = [];
-  expect(
-    processEvent({ type: "connecting" }, { onEvent: (event) => seen.push(event.type) }),
-  ).toEqual({});
-  expect(processEvent({ type: "reconnecting" }, {}).error).toBeTruthy();
-  expect(processEvent({ type: "reconnected" }, {}).error).toBeTruthy();
-  expect(processEvent({ type: "open" }, { onEvent: (event) => seen.push(event.type) })).toEqual({});
-  expect(processEvent({ type: "error", error: new Error("socket") }, {}).error).toBeTruthy();
-  expect(
-    processEvent(
-      {
-        type: "message",
-        message: {
-          type: "response.incomplete",
-          response: { incomplete_details: { reason: "length" } },
-        },
-      },
-      {},
-    ).error,
-  ).toBeTruthy();
-  expect(processEvent({ type: "unknown" }, {})).toEqual({});
+test("processes incomplete protocol events", () => {
   expect(
     processEvent({ type: "message", message: { type: "response.failed" } }, {}).error,
   ).toBeTruthy();
   expect(
     processEvent({ type: "message", message: { type: "response.incomplete" } }, {}).error,
   ).toBeTruthy();
-  expect(seen).toEqual(["connecting", "open"]);
 });

@@ -1,7 +1,7 @@
-import { addListener, removeListener, emit } from "./listeners.mjs";
 import { initializeSocket } from "./socket/state.mjs";
 import { sendMessage, pushMessages } from "./socket/messages.mjs";
 import { closeSocket } from "./socket/lifecycle.mjs";
+import { createMockSocketListenerMethods } from "./socket/listener-methods.mjs";
 
 export function createMockSocketClass(events, options) {
   const defaults = { autoOpen: true, delay: 0, ...options };
@@ -13,28 +13,22 @@ export function createMockSocketClass(events, options) {
     static instances = [];
     constructor(url = "", protocols) {
       initializeSocket(this, MockResponsesWebSocket, defaults, events, url, protocols);
+      this.listenerMethods = createMockSocketListenerMethods(this);
     }
     on(event, listener) {
-      addListener(this, event, listener);
-      return this;
+      return this.listenerMethods.on(event, listener);
     }
     once(event, listener) {
-      const once = (...args) => {
-        this.removeListener(event, once);
-        listener(...args);
-      };
-      return this.on(event, once);
+      return this.listenerMethods.once(event, listener);
     }
     off(event, listener) {
-      return this.removeListener(event, listener);
+      return this.listenerMethods.off(event, listener);
     }
     removeListener(event, listener) {
-      removeListener(this, event, listener);
-      return this;
+      return this.listenerMethods.removeListener(event, listener);
     }
     emit(event, ...args) {
-      emit(this, event, ...args);
-      return this;
+      return this.listenerMethods.emit(event, ...args);
     }
     send(data) {
       return sendMessage(this, data, defaults);

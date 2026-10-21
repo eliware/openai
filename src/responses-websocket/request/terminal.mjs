@@ -1,9 +1,9 @@
 import { ResponsesError } from "../../errors/responses-error.mjs";
-import { responsesWebSocketError } from "../../errors/websocket-normalize.mjs";
 import { normalizeEvent } from "../../events/normalize.mjs";
 import { dispatch } from "../../responses-http/callback/dispatch.mjs";
 import { hasPendingSteer, observeControlEvent } from "./control/events.mjs";
 import { createRequestControlState } from "./control/state.mjs";
+import { processLifecycleEvent } from "./lifecycle-events.mjs";
 
 export function processEvent(event, callbacks, control = createRequestControlState()) {
   if (event.type === "message") {
@@ -47,27 +47,5 @@ export function processEvent(event, callbacks, control = createRequestControlSta
       };
     return { message };
   }
-  if (event.type === "connecting" || event.type === "open") {
-    callbacks.onEvent?.(event, event.raw);
-    return {};
-  }
-  if (event.type === "reconnecting" || event.type === "reconnected")
-    return {
-      error: responsesWebSocketError(
-        normalizeEvent(event, event),
-        "Responses WebSocket reconnect interrupted the request",
-      ),
-    };
-  if (event.type === "error")
-    return {
-      error: responsesWebSocketError(normalizeEvent(event, event), "Responses WebSocket error"),
-    };
-  if (event.type === "close")
-    return {
-      error: responsesWebSocketError(
-        normalizeEvent(event, event),
-        "Responses WebSocket closed before the final response",
-      ),
-    };
-  return {};
+  return processLifecycleEvent(event, callbacks);
 }
