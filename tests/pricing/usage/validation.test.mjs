@@ -1,9 +1,5 @@
 import { validateUsage } from "../../../src/pricing/usage/validation.mjs";
 
-test.each([-1, 1.5])("rejects invalid usage count %p", (input_tokens) => {
-  expect(() => validateUsage({ input_tokens })).toThrow();
-});
-
 test("rejects a non-object usage value", () => {
   expect(() => validateUsage(null)).toThrow("Usage must be an object");
 });

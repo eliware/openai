@@ -1,11 +1,5 @@
 import { createSocketOperations } from "./operations.mjs";
-import { createListenerRegistry } from "./listener/registry.mjs";
-import { createListenerMethods } from "./listener/methods.mjs";
-
-function createNodeSocketListenerAdapter(adapter) {
-  adapter.listeners = createListenerRegistry(adapter.socket);
-  return createListenerMethods(adapter);
-}
+import { createNodeSocketListenerAdapter } from "./listener/adapter.mjs";
 
 export class NodeSocketAdapter {
   constructor(socket) {
