@@ -1,4 +1,15 @@
-import { selectEvents } from "../../../src/mock-transport/socket/event-selection.mjs";
+import {
+  selectEvents,
+  selectInitialEvents,
+} from "../../../src/mock-transport/socket/event-selection.mjs";
+
+test("selects configured initial events or constructor events", () => {
+  const configured = [{ type: "configured" }];
+  const fallback = [{ type: "default" }];
+
+  expect(selectInitialEvents(configured, fallback)).toBe(configured);
+  expect(selectInitialEvents(() => [], fallback)).toBe(fallback);
+});
 
 test("selects generated or configured socket events", () => {
   const configured = [{ type: "configured" }];

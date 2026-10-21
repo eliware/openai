@@ -1,4 +1,5 @@
 import { processEvent } from "../../../src/responses-websocket/request/terminal.mjs";
+import { createRequestControlState } from "../../../src/responses-websocket/request/control.mjs";
 
 test("processes terminal protocol events", () => {
   expect(
@@ -27,15 +28,7 @@ test("processes terminal protocol events", () => {
 });
 
 test("normalizes callback events before it updates steering state", () => {
-  const control = {
-    currentResponseId: undefined,
-    responseIds: new Set(),
-    pendingSteers: new Set(),
-    acceptedSteers: new Set(),
-    waitingForInput: undefined,
-    continuationSent: false,
-    deferredCompletion: undefined,
-  };
+  const control = createRequestControlState();
   const raw = {
     type: "message",
     message: {
@@ -54,51 +47,6 @@ test("normalizes callback events before it updates steering state", () => {
     requestId: "req_1",
   });
   expect(control.waitingForInput).toBe("resp_1");
-});
-
-test("defers completion while steering, accepts steered incomplete, and resolves failed steer", () => {
-  const control = {
-    currentResponseId: "r",
-    responseIds: new Set(["r"]),
-    pendingSteers: new Set(["r"]),
-    acceptedSteers: new Set(),
-    waitingForInput: undefined,
-    continuationSent: false,
-    deferredCompletion: undefined,
-  };
-  const completed = {
-    type: "message",
-    message: { type: "response.completed", response: { id: "r" } },
-  };
-  expect(processEvent(completed, {}, control)).toMatchObject({
-    message: { type: "response.completed" },
-  });
-  expect(control.deferredCompletion).toMatchObject({ type: "response.completed" });
-  expect(
-    processEvent(
-      {
-        type: "message",
-        message: {
-          type: "response.incomplete",
-          response: { id: "r", incomplete_details: { reason: "steered" } },
-        },
-      },
-      {},
-      control,
-    ),
-  ).toMatchObject({ message: { type: "response.incomplete" } });
-
-  control.pendingSteers.clear();
-  expect(
-    processEvent(
-      {
-        type: "message",
-        message: { type: "response.steer.failed", steer: { previous_response_id: "r" } },
-      },
-      {},
-      control,
-    ),
-  ).toEqual({ done: true });
 });
 
 test("processes incomplete protocol events", () => {

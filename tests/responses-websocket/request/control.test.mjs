@@ -1,8 +1,21 @@
-import { createRequestControlState } from "../../../../src/responses-websocket/request/control/state.mjs";
 import {
+  createRequestControlState,
   hasPendingSteer,
   observeControlEvent,
-} from "../../../../src/responses-websocket/request/control/events.mjs";
+} from "../../../src/responses-websocket/request/control.mjs";
+
+test("creates independent response control state", () => {
+  const state = createRequestControlState();
+  expect(state).toMatchObject({
+    currentResponseId: undefined,
+    continuationSent: false,
+    waitingForInput: undefined,
+  });
+  expect(state.responseIds).toBeInstanceOf(Set);
+  expect(state.pendingSteers).toBeInstanceOf(Set);
+  expect(state.acceptedSteers).toBeInstanceOf(Set);
+});
+
 test("tracks response creation, steering, failure, and continuation transitions", () => {
   const state = createRequestControlState();
   observeControlEvent(state, { type: "response.created", response: { id: "r1" } });

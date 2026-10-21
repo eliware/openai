@@ -1,8 +1,7 @@
 import { ResponsesError } from "../../errors/responses-error.mjs";
 import { normalizeEvent } from "../../events/normalize.mjs";
 import { dispatch } from "../../responses-http/callback/dispatch.mjs";
-import { hasPendingSteer, observeControlEvent } from "./control/events.mjs";
-import { createRequestControlState } from "./control/state.mjs";
+import { createRequestControlState, hasPendingSteer, observeControlEvent } from "./control.mjs";
 import { processLifecycleEvent } from "./lifecycle-events.mjs";
 
 export function processEvent(event, callbacks, control = createRequestControlState()) {

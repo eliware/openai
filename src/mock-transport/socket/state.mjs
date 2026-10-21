@@ -1,3 +1,5 @@
+import { selectInitialEvents } from "./event-selection.mjs";
+
 export function initializeSocket(socket, defaults, events, url, protocols) {
   socket.url = url;
   socket.protocols = protocols;
@@ -6,6 +8,6 @@ export function initializeSocket(socket, defaults, events, url, protocols) {
   socket.sent = [];
   socket.closed = false;
   socket._timers = new Set();
-  socket._events = [...(Array.isArray(defaults.events) ? defaults.events : events)];
+  socket._events = [...selectInitialEvents(defaults.events, events)];
   if (defaults.autoOpen) queueMicrotask(() => socket.emit("open"));
 }

@@ -2,7 +2,7 @@ import { ResponsesError } from "../../errors/responses-error.mjs";
 import { normalizeEvent } from "../../events/normalize.mjs";
 import { processEvent } from "./terminal.mjs";
 import { readRequestEvent } from "./read.mjs";
-import { createRequestControlState } from "./control/state.mjs";
+import { createRequestControlState } from "./control.mjs";
 import { logRequestMessage, logRequestTransport } from "./logging.mjs";
 
 export async function* readResponseEvents(

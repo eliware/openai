@@ -1,3 +1,7 @@
+export function selectInitialEvents(defaultEvents, events) {
+  return Array.isArray(defaultEvents) ? defaultEvents : events;
+}
+
 export function selectEvents(socket, data, defaults) {
   const events =
     typeof defaults.events === "function" ? defaults.events(data, socket) : socket._events;
