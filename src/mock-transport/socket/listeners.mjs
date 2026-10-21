@@ -4,6 +4,7 @@ export function addListener(state, event, listener) {
   state.listeners.set(event, list);
   return state;
 }
+
 export function removeListener(state, event, listener) {
   state.listeners.set(
     event,
@@ -11,6 +12,7 @@ export function removeListener(state, event, listener) {
   );
   return state;
 }
+
 export function emit(state, event, ...args) {
   for (const listener of state.listeners.get(event) ?? []) listener(...args);
   return state;

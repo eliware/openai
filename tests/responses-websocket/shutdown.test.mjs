@@ -55,6 +55,12 @@ describe("ResponsesWebSocketAdapter", () => {
     expect(adapter.socket._createSocket("ws://default", {}).readyState).toBe(1);
     await adapter.close();
   });
+
+  test("closes the public adapter and updates its state", async () => {
+    const adapter = new ResponsesWebSocketAdapter({});
+    await expect(adapter.close()).resolves.toBeUndefined();
+    expect(adapter._closed).toBe(true);
+  });
 });
 
 test("is idempotent and supports adapters without a socket close method", async () => {

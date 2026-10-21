@@ -1,4 +1,4 @@
-import { addListener, removeListener, emit } from "../listeners.mjs";
+import { addListener, removeListener, emit } from "./listeners.mjs";
 
 export function createMockSocketListenerMethods(socket) {
   const methods = {

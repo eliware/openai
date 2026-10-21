@@ -47,16 +47,6 @@ test("supports abort, lifecycle, and socket errors", async () => {
   await expect(adapter.create({})).rejects.toThrow("socket");
 });
 
-test("composes the public readiness, state, and shutdown methods", async () => {
-  const adapter = new ResponsesWebSocketAdapter({});
-
-  expect(adapter.isOpen()).toBe(true);
-  expect(adapter.state).toBe("open");
-  await expect(adapter.ready()).resolves.toBeUndefined();
-  await expect(adapter.close()).resolves.toBeUndefined();
-  expect(adapter._closed).toBe(true);
-});
-
 test("aborts one concurrent readiness wait without cancelling another", async () => {
   const handlers = new Map();
   const socket = {

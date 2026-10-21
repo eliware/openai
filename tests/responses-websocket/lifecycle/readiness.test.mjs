@@ -1,4 +1,27 @@
+import { jest } from "@jest/globals";
 import { waitForReadiness } from "../../../src/responses-websocket/lifecycle/readiness.mjs";
+
+class FakeResponsesWS {
+  constructor() {
+    this.socket = { readyState: 1 };
+  }
+  _createSocket() {
+    return this.socket;
+  }
+  on() {
+    return this;
+  }
+  off() {
+    return this;
+  }
+  close() {}
+  send() {}
+  async *stream() {}
+}
+
+jest.unstable_mockModule("openai/resources/responses/ws", () => ({ ResponsesWS: FakeResponsesWS }));
+jest.unstable_mockModule("ws", () => ({ WebSocket: class {} }));
+const { ResponsesWebSocketAdapter } = await import("../../../src/responses-websocket/index.mjs");
 
 test("uses socket events when the socket supports listeners", async () => {
   const handlers = new Map();
@@ -26,4 +49,11 @@ test("uses the stream when the socket has no listener API", async () => {
     isOpen: () => false,
   };
   await expect(waitForReadiness(adapter)).resolves.toBeUndefined();
+});
+
+test("composes the public readiness and state methods", async () => {
+  const adapter = new ResponsesWebSocketAdapter({});
+  expect(adapter.isOpen()).toBe(true);
+  expect(adapter.state).toBe("open");
+  await expect(adapter.ready()).resolves.toBeUndefined();
 });
