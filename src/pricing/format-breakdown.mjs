@@ -1,6 +1,4 @@
-export function roundCost(value) {
-  return Number(value.toFixed(6));
-}
+import { roundCost } from "./formatting/round-cost.mjs";
 
 export function formatBreakdown(model, normalized, longContext, costs) {
   return {

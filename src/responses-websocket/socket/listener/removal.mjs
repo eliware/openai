@@ -1,8 +1,8 @@
-export function removeAllListeners(listeners, binding, event) {
+export function removeAllListeners(store, binding, event) {
   if (event === undefined) {
-    for (const name of listeners.keys()) removeAllListeners(listeners, binding, name);
+    for (const name of store.events()) removeAllListeners(store, binding, name);
     return;
   }
-  for (const wrapped of listeners.get(event)?.values() ?? []) binding.remove(event, wrapped);
-  listeners.delete(event);
+  for (const wrapped of store.values(event)) binding.remove(event, wrapped);
+  store.clear(event);
 }

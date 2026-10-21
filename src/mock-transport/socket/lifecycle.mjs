@@ -4,11 +4,6 @@ export function scheduleSocketOpen(socket) {
   queueMicrotask(() => socket.emit("open"));
 }
 
-export function emitSocketError(socket, error) {
-  socket.emit("error", error);
-  return socket;
-}
-
 export function closeSocket(socket, code, reason) {
   if (socket.readyState === 3) return socket;
   socket.readyState = 3;

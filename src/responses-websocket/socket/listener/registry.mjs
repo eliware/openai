@@ -1,23 +1,22 @@
 import { createSocketListenerBinding } from "./binding.mjs";
 import { removeAllListeners } from "./removal.mjs";
+import { createListenerStore } from "./store.mjs";
 
 export function createListenerRegistry(socket) {
-  const listeners = new Map();
+  const store = createListenerStore();
   const binding = createSocketListenerBinding(socket);
   return {
     add(event, listener) {
-      const eventListeners = listeners.get(event) ?? new Map();
       const wrapped = binding.add(event, listener);
-      eventListeners.set(listener, wrapped);
-      listeners.set(event, eventListeners);
+      store.add(event, listener, wrapped);
     },
     remove(event, listener) {
-      const wrapped = listeners.get(event)?.get(listener);
+      const wrapped = store.get(event, listener);
       if (wrapped) binding.remove(event, wrapped);
-      listeners.get(event)?.delete(listener);
+      store.remove(event, listener);
     },
     removeAll(event) {
-      removeAllListeners(listeners, binding, event);
+      removeAllListeners(store, binding, event);
     },
   };
 }

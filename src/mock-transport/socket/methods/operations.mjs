@@ -1,4 +1,5 @@
-import { closeSocket, emitSocketError } from "../lifecycle.mjs";
+import { closeSocket } from "../lifecycle.mjs";
+import { emitSocketError } from "../error.mjs";
 import { sendMessage, pushMessages } from "../messages.mjs";
 
 export function createMockSocketOperations(defaults) {
