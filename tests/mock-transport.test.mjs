@@ -6,7 +6,7 @@ afterEach(() => jest.useRealTimers());
 
 const tick = () => jest.advanceTimersByTimeAsync(0);
 
-test("mock transport emits open, messages, and close", async () => {
+test("mock transport emits open, messages, and close events", async () => {
   const Mock = createMockResponsesTransport([{ type: "test" }]);
   const socket = new Mock();
   const seen = [];
@@ -17,6 +17,17 @@ test("mock transport emits open, messages, and close", async () => {
   await tick();
   socket.close();
   expect(seen).toEqual(["open", "test", "1000:OK"]);
+  expect(socket.readyState).toBe(3);
+
+  const EmptyMock = createMockResponsesTransport();
+  const emptySocket = new EmptyMock();
+  const close = [];
+  emptySocket.on("close", (...args) => close.push(args));
+  emptySocket.send();
+  await tick();
+  emptySocket.close(1001, "bye");
+  expect(close).toEqual([[1001, "bye"]]);
+  expect(emptySocket.readyState).toBe(3);
 });
 
 test("supports delayed events, sent payloads, errors, reconnects, and listeners", async () => {
@@ -40,18 +51,6 @@ test("supports delayed events, sent payloads, errors, reconnects, and listeners"
   socket.removeListener("close", onClose);
   socket.close(1001, "done");
   expect(socket.closed).toEqual({ code: 1001, reason: "done" });
-});
-
-test("supports empty events and explicit close arguments", async () => {
-  const Mock = createMockResponsesTransport();
-  const socket = new Mock();
-  const close = [];
-  socket.on("close", (...args) => close.push(args));
-  socket.send();
-  await tick();
-  socket.close(1001, "bye");
-  expect(close).toEqual([[1001, "bye"]]);
-  expect(socket.readyState).toBe(3);
 });
 
 test("supports AgentX protocol scenario events", async () => {

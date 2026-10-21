@@ -1,4 +1,5 @@
 import { createSocketListenerBinding } from "./binding.mjs";
+import { removeAllListeners } from "./removal.mjs";
 
 export function createListenerRegistry(socket) {
   const listeners = new Map();
@@ -16,12 +17,7 @@ export function createListenerRegistry(socket) {
       listeners.get(event)?.delete(listener);
     },
     removeAll(event) {
-      if (event === undefined) {
-        for (const name of listeners.keys()) this.removeAll(name);
-        return;
-      }
-      for (const wrapped of listeners.get(event)?.values() ?? []) binding.remove(event, wrapped);
-      listeners.delete(event);
+      removeAllListeners(listeners, binding, event);
     },
   };
 }

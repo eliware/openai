@@ -1,3 +1,5 @@
+import { validateUsageConsistency } from "./consistency.mjs";
+
 function usageCount(usage, key) {
   const value = usage?.[key] ?? 0;
   if (!Number.isInteger(value) || value < 0) {
@@ -18,9 +20,5 @@ export function validateUsage(usage = {}) {
   const cachedInput = usageCount(usage.input_tokens_details, "cached_tokens");
   const cacheWrite = usageCount(usage.input_tokens_details, "cache_write_tokens");
   usageCount(usage, "output_tokens");
-  if (cachedInput + cacheWrite > input) {
-    const error = new Error("Cached usage must be no more than input usage");
-    error.code = "INVALID_USAGE";
-    throw error;
-  }
+  validateUsageConsistency(input, cachedInput, cacheWrite);
 }
