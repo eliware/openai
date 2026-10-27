@@ -4,20 +4,26 @@ export function createListenerStore() {
   return {
     add(event, listener, wrapped) {
       const eventListeners = listeners.get(event) ?? new Map();
-      eventListeners.set(listener, wrapped);
+      const wrappers = eventListeners.get(listener) ?? [];
+      wrappers.push(wrapped);
+      eventListeners.set(listener, wrappers);
       listeners.set(event, eventListeners);
     },
     get(event, listener) {
-      return listeners.get(event)?.get(listener);
+      return listeners.get(event)?.get(listener)?.at(-1);
     },
     remove(event, listener) {
-      listeners.get(event)?.delete(listener);
+      const eventListeners = listeners.get(event);
+      const wrappers = eventListeners?.get(listener);
+      wrappers?.pop();
+      if (wrappers?.length === 0) eventListeners.delete(listener);
+      if (eventListeners?.size === 0) listeners.delete(event);
     },
     events() {
       return listeners.keys();
     },
     values(event) {
-      return listeners.get(event)?.values() ?? [];
+      return [...(listeners.get(event)?.values() ?? [])].flat();
     },
     clear(event) {
       listeners.delete(event);

@@ -1,4 +1,4 @@
-import { createMockSocketClass } from "./mock-transport/socket.mjs";
+import { createMockSocketClass } from "./mock-transport/class.mjs";
 export function createMockResponsesTransport(events = [], options = {}) {
   return createMockSocketClass(events, options);
 }

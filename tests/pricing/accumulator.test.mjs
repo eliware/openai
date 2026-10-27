@@ -15,3 +15,15 @@ test("aggregates GPT-6 usage under GPT-6 model IDs", () => {
     models: { "gpt-6-sol": { requests: 1, estimated_cost_usd: 19 } },
   });
 });
+
+test("keeps fractional costs until it creates the summary", () => {
+  const accumulator = createPricingAccumulator();
+  for (let request = 0; request < 6; request += 1)
+    accumulator.add("gpt-6-luna", { input_tokens: 1 });
+
+  expect(accumulator.summary()).toMatchObject({
+    requests: 6,
+    estimated_cost_usd: 0.000001,
+    models: { "gpt-6-luna": { estimated_cost_usd: 0.000001 } },
+  });
+});

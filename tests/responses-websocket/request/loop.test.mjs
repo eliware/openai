@@ -121,6 +121,43 @@ test.each([
   expect(onErrors[0].event).toMatchObject({ type: message.type });
 });
 
+test("passes normalized provider details to onError for failed responses", async () => {
+  const providerError = {
+    message: "provider rejected",
+    code: "quota",
+    status: 429,
+    param: "model",
+    request_id: "req-1",
+  };
+  const raw = {
+    type: "message",
+    message: { type: "response.failed", response_id: "resp-1", error: providerError },
+  };
+  const onError = jest.fn();
+
+  await expect(
+    collect(
+      readResponseEvents(
+        async () => ({ value: raw, done: false }),
+        { onError },
+        { wasAborted: () => false },
+        undefined,
+      ),
+    ),
+  ).rejects.toMatchObject({
+    name: "ResponsesError",
+    code: "quota",
+    status: 429,
+    parameter: "model",
+    requestId: "req-1",
+  });
+
+  expect(onError).toHaveBeenCalledWith(
+    expect.objectContaining({ code: "quota", status: 429, parameter: "model", requestId: "req-1" }),
+    expect.objectContaining({ raw, responseId: "resp-1", requestId: "req-1" }),
+  );
+});
+
 test("yields incomplete responses and stops without reporting an error", async () => {
   let calls = 0;
   const onError = jest.fn();

@@ -1,5 +1,20 @@
 # Release Notes
 
+## 15.0.1 — 2026-10-26
+
+### Changed
+
+- Set the package version to 15.0.1.
+- Update `@eliware/log` and `@eliware/test` to 15.0.1.
+- Update `openai` to 7.45.0 and update the remaining dependencies.
+- Separate mock WebSocket class creation from socket setup.
+- Separate pricing summary formatting from request aggregation.
+
+### Fixed
+
+- Keep full cost precision during aggregation. Format each summary total to six decimal places.
+- Remove duplicate socket listener registrations one at a time.
+
 ## 15.0.0 — 2026-10-21
 
 ### Added

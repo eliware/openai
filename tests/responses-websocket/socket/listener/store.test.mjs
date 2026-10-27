@@ -25,3 +25,17 @@ test("removes listeners and clears event storage", () => {
   expect([...store.events()]).toEqual([]);
   expect([...store.values("message")]).toEqual([]);
 });
+
+test("retains each wrapper when the same listener is registered more than once", () => {
+  const store = createListenerStore();
+  const listener = () => {};
+  const first = () => {};
+  const second = () => {};
+  store.add("message", listener, first);
+  store.add("message", listener, second);
+
+  expect(store.get("message", listener)).toBe(second);
+  store.remove("message", listener);
+  expect(store.get("message", listener)).toBe(first);
+  expect([...store.values("message")]).toEqual([first]);
+});
